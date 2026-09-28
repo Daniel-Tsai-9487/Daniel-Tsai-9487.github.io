@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">MY 01</title>
+  <rect width="64" height="64" fill="#101112"/>
+  <path d="M8 9h48v46H8z" fill="none" stroke="#d8f20b" stroke-width="3"/>
+  <path d="M15 18h34M15 45h21" stroke="#f5f2ea" stroke-width="3"/>
+  <text x="14" y="38" fill="#d8f20b" font-family="Arial Black, sans-serif" font-size="19">MY</text>
+  <text x="40" y="51" fill="#ff5a3a" font-family="monospace" font-size="11">01</text>
+</svg>
