@@ -139,7 +139,7 @@ section[id] {
   align-items: center;
   color: #d5d2cc;
   display: inline-flex;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   min-height: 44px;
 }
@@ -166,6 +166,7 @@ section[id] {
   display: grid;
   gap: 28px;
   grid-template-columns: minmax(250px, 0.78fr) minmax(430px, 1.32fr) minmax(165px, 0.34fr);
+  isolation: isolate;
   min-height: calc(100svh - 108px);
   overflow: hidden;
   padding: 70px 5vw 86px;
@@ -173,12 +174,14 @@ section[id] {
 }
 
 .hero::before {
-  border: 1px solid #343530;
+  background: #343530;
   content: "";
-  height: 13px;
-  inset: 22px 2vw auto;
+  height: 1px;
+  left: 5vw;
+  top: 36px;
   pointer-events: none;
   position: absolute;
+  width: min(390px, 31vw);
   z-index: 0;
 }
 
@@ -271,7 +274,7 @@ section[id] {
 .text-action {
   align-items: center;
   display: inline-flex;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   gap: 8px;
   justify-content: center;
@@ -345,7 +348,7 @@ section[id] {
   border-bottom: 1px solid #454641;
   display: grid;
   gap: 18px;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(215px, 0.72fr);
   padding: 21px 17px 19px;
   position: relative;
 }
@@ -366,7 +369,7 @@ section[id] {
 .thread-next em {
   color: #d8f20b;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 13px;
+  font-size: 15px;
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -382,9 +385,9 @@ section[id] {
 
 .system-map-intro > span {
   color: #c2c0b9;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
-  max-width: 310px;
+  max-width: 265px;
   text-align: right;
 }
 
@@ -449,7 +452,7 @@ section[id] {
   border: 1px solid currentColor;
   display: inline-flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   gap: 5px;
   line-height: 1.2;
@@ -469,7 +472,7 @@ section[id] {
 
 .thread-detail {
   color: #b9b6ae;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -478,7 +481,7 @@ section[id] {
   color: #d1cec6;
   display: flex;
   flex-wrap: wrap;
-  font-size: 14px;
+  font-size: 16px;
   gap: 7px;
   line-height: 1.45;
   margin-top: 4px;
@@ -486,14 +489,14 @@ section[id] {
 
 .thread-next em {
   color: #8d8b84;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .thread-action {
   align-items: center;
   color: #d8f20b;
   display: inline-flex;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   gap: 5px;
   padding-top: 5px;
@@ -503,7 +506,7 @@ section[id] {
 .system-map-footer {
   border-top: 1px solid #454641;
   color: #a5a39c;
-  font-size: 13px;
+  font-size: 15px;
   gap: 12px;
   justify-content: flex-start;
   line-height: 1.45;
@@ -575,20 +578,10 @@ section[id] {
 }
 
 .hero-companion {
-  animation: hero-companion-drift 8s ease-in-out infinite;
-  bottom: -18px;
-  filter: saturate(0.76) contrast(1.06) sepia(0.08);
-  height: auto;
-  mask-image: radial-gradient(ellipse 61% 67% at 50% 47%, #000 46%, transparent 100%);
-  max-height: calc(100% - 8px);
-  opacity: 0.5;
+  display: none;
   pointer-events: none;
   position: absolute;
-  right: clamp(-22px, 0vw, 14px);
   user-select: none;
-  -webkit-mask-image: radial-gradient(ellipse 61% 67% at 50% 47%, #000 46%, transparent 100%);
-  width: clamp(170px, 16vw, 250px);
-  z-index: 2;
 }
 
 .hero-scroll-cue {
@@ -597,7 +590,7 @@ section[id] {
   color: #d8f20b;
   display: flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   gap: 8px;
   position: absolute;
@@ -3017,6 +3010,26 @@ section[id] {
 @media (max-width: 820px) {
   .hero-companion {
     display: none;
+  }
+}
+
+@media (min-width: 1240px) {
+  .hero-companion {
+    animation: hero-companion-drift 8s ease-in-out infinite;
+    background-color: #161714;
+    background-image: url("/characters/field-companion-user-provided.png");
+    background-position: 50% 18%;
+    background-size: cover;
+    display: block;
+    filter: saturate(0.58) brightness(0.66) contrast(1.02) sepia(0.1);
+    height: clamp(170px, 14vw, 220px);
+    left: clamp(210px, 21vw, 318px);
+    mask-image: radial-gradient(ellipse 64% 68% at 50% 48%, #000 43%, transparent 100%);
+    opacity: 0.78;
+    top: 98px;
+    -webkit-mask-image: radial-gradient(ellipse 64% 68% at 50% 48%, #000 43%, transparent 100%);
+    width: clamp(136px, 11.3vw, 176px);
+    z-index: 0;
   }
 }
 

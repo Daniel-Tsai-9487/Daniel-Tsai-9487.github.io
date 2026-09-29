@@ -150,4 +150,9 @@ function staticProjectPages(): Plugin {
 export default defineConfig({
   base: "/",
   plugins: [react(), staticProjectPages()],
+  server: {
+    watch: {
+      ignored: ["**/artifacts/**", "**/graphify-out/**", "**/tools/**"],
+    },
+  },
 });

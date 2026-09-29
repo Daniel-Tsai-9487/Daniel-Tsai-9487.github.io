@@ -300,7 +300,7 @@ function SystemMap() {
           <p>目前可公開追蹤</p>
           <h2 id="system-map-heading">進行中的公開案例</h2>
         </div>
-        <span>點選各案例，可查看公開素材、佐證與目前狀態。</span>
+        <span>點選案例查看公開詳情。</span>
       </div>
       <ol className="system-thread-list">
         {currentThreads.map((thread, index) => (
@@ -1169,17 +1169,7 @@ function App() {
             <div><span>FOCUS</span><strong>AI / EDGE<br />BIOMEDICAL</strong></div>
             <div><span>METHOD</span><strong>MODEL TO<br />SYSTEM</strong></div>
           </aside>
-          <img
-            alt=""
-            aria-hidden="true"
-            className="hero-companion"
-            decoding="async"
-            draggable={false}
-            fetchPriority="high"
-            height={960}
-            src="/characters/field-companion-user-provided.png"
-            width={768}
-          />
+          <div className="hero-companion" aria-hidden="true" />
           <a className="hero-scroll-cue" href="#positioning"><span>SCROLL TO ENTER</span><ArrowDownRight size={18} /></a>
         </section>
 
