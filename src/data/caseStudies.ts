@@ -77,13 +77,23 @@ export type CaseStudyEvidence = {
   source: string;
 };
 
-export type CaseStudyLink = {
+type CaseStudyLinkBase = {
   label: string;
   title: string;
   detail: string;
-  availability: "PUBLIC" | "RESTRICTED";
-  href?: string;
 };
+
+export type CaseStudyPublicLink = CaseStudyLinkBase & {
+  availability: "PUBLIC";
+  href: string;
+};
+
+export type CaseStudyRestrictedLink = CaseStudyLinkBase & {
+  availability: "RESTRICTED";
+  href?: never;
+};
+
+export type CaseStudyLink = CaseStudyPublicLink | CaseStudyRestrictedLink;
 
 export type CaseStudyPublicScope = {
   summary: string;
@@ -366,8 +376,8 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "TRACE", value: "4-STEP TRACE", detail: "每次處理保留 route、dispatch、tool、validate 四步 trace，並把不確定結果交由人工審查。", source: "TRACE CONTRACT / RESTRICTED" },
     ],
     links: [
-      { label: "GITHUB PROFILE", title: "Daniel-Tsai-9487 / GitHub", detail: "公開個人程式作品入口；不代表本案例的私有 repository 已開放。", availability: "PUBLIC", href: "https://github.com/Daniel-Tsai-9487" },
       { label: "SOURCE ACCESS", title: "案例原始碼仍為私有", detail: "不公開產線資料、原始碼、機密設定或競賽提交包。", availability: "RESTRICTED" },
+      { label: "COMPETITION RECORD", title: "競賽成果佐證受限", detail: "公開頁保留佳作與系統範圍；主辦成果頁或團隊授權素材確認後才會新增外部連結。", availability: "RESTRICTED" },
     ],
     publicScope: {
       summary: "公開頁只說明離線 Agent 的架構、治理邏輯與競賽成果，不接觸產線資料或放行決策。",
@@ -496,12 +506,12 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
     ],
     evidence: [
       { label: "PRODUCT", value: "6 MODULES", detail: "將市場情境、模擬交易、風控與金融教育整合為研究型產品原型。", source: "LOCAL PRODUCT BASELINE / RESTRICTED" },
-      { label: "AUTOMATION", value: "94 TESTS", detail: "自主原型保留 94 項自動化測試；這是工程覆蓋記錄，不是投資績效或模型報酬。", source: "TEST BASELINE / RESTRICTED" },
-      { label: "BASELINE", value: "160 TRACKED FILES", detail: "整合基準記錄 160 個受版控檔案與 141,309 行插入；它是專案規模快照，不代表產品效果。", source: "VERSION-CONTROL BASELINE / RESTRICTED" },
+      { label: "POSITION", value: "RISK EDUCATION", detail: "以延遲資料、情境回放與風險提示說明研究方法，不提供個別化買賣建議或真實下單。", source: "PUBLIC PRODUCT BOUNDARY" },
+      { label: "DELIVERY", value: "INDEPENDENT PROTOTYPE", detail: "依競賽規格自主完成，但未完成投稿；不將原型當作競賽參賽、入圍或獲獎紀錄。", source: "PROJECT STATUS RECORD / RESTRICTED" },
     ],
     links: [
-      { label: "GITHUB PROFILE", title: "Daniel-Tsai-9487 / GitHub", detail: "公開個人程式作品入口；不代表受限資料、金流設定或私有 repository 已公開。", availability: "PUBLIC", href: "https://github.com/Daniel-Tsai-9487" },
-      { label: "PRODUCT ACCESS", title: "公開 demo 待授權整理", detail: "目前不公開原始金融資料、資料庫、環境設定或真實交易功能。", availability: "RESTRICTED" },
+      { label: "PRODUCT ACCESS", title: "完整系統素材受限", detail: "不公開原始金融資料、資料庫、環境設定、私有 repository 或真實交易功能。", availability: "RESTRICTED" },
+      { label: "DEMO STATUS", title: "公開 Demo 暫不列出", detail: "在可確認長期可用且不含受限資料前，網站只提供公開合成展示與案例說明。", availability: "RESTRICTED" },
     ],
     publicScope: {
       summary: "公開頁呈現研究與風險教育的產品架構，不提供真實下單、金融資料匯出或投資建議。",

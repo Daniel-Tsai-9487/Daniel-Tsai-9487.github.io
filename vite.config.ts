@@ -2,9 +2,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import { getCaseStudy } from "./src/data/caseStudies";
+import { flagshipProjectIds, getCaseStudy } from "./src/data/caseStudies";
+import { englishCaseSummaries } from "./src/data/englishPortfolio";
 import { portfolioProjects, type PortfolioProject } from "./src/data/portfolio";
-import { absoluteSiteUrl, profilePath, projectPath, siteConfig } from "./src/site";
+import { absoluteSiteUrl, englishPath, profilePath, projectPath, siteConfig } from "./src/site";
 
 function escapeHtmlAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -25,6 +26,12 @@ function replaceCanonical(html: string, url: string) {
   const pattern = /<link rel="canonical" href="[^"]*"\s*\/?>/;
   if (!pattern.test(html)) throw new Error("Missing canonical metadata.");
   return html.replace(pattern, `<link rel="canonical" href="${escapeHtmlAttribute(url)}" />`);
+}
+
+function replaceHtmlLanguage(html: string, language: string) {
+  const pattern = /<html lang="[^"]*">/;
+  if (!pattern.test(html)) throw new Error("Missing html language attribute.");
+  return html.replace(pattern, `<html lang="${escapeHtmlAttribute(language)}">`);
 }
 
 function replaceStructuredData(html: string, structuredData: object) {
@@ -151,8 +158,59 @@ function renderProfilePage(sourceHtml: string) {
   return replaceStructuredData(html, structuredData);
 }
 
+function renderEnglishPage(sourceHtml: string) {
+  const canonical = absoluteSiteUrl(englishPath());
+  const socialImage = absoluteSiteUrl(siteConfig.defaultSocialImage);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: siteConfig.englishTitle,
+    description: siteConfig.englishDescription,
+    url: canonical,
+    inLanguage: "en",
+    author: {
+      "@type": "Person",
+      name: "Min-Yu Tsai",
+      alternateName: "蔡旻佑",
+      url: siteConfig.origin,
+    },
+    hasPart: flagshipProjectIds.flatMap((projectId) => {
+      const project = portfolioProjects.find((item) => item.id === projectId);
+      const summary = englishCaseSummaries[projectId];
+      if (!project) return [];
+
+      return [{
+        "@type": "CreativeWork",
+        name: summary.title,
+        alternateName: project.title,
+        description: summary.summary,
+        url: absoluteSiteUrl(projectPath(project.id)),
+      }];
+    }),
+  };
+  let html = sourceHtml.replace(/<title>[\s\S]*?<\/title>/, `<title>${siteConfig.englishTitle}</title>`);
+
+  html = replaceHtmlLanguage(html, "en");
+  html = replaceMeta(html, "name", "description", siteConfig.englishDescription);
+  html = replaceCanonical(html, canonical);
+  html = replaceMeta(html, "property", "og:locale", "en_US");
+  html = replaceMeta(html, "property", "og:site_name", siteConfig.englishSiteName);
+  html = replaceMeta(html, "property", "og:title", siteConfig.englishTitle);
+  html = replaceMeta(html, "property", "og:description", siteConfig.englishDescription);
+  html = replaceMeta(html, "property", "og:type", "website");
+  html = replaceMeta(html, "property", "og:url", canonical);
+  html = replaceMeta(html, "property", "og:image", socialImage);
+  html = replaceMeta(html, "property", "og:image:alt", "Min-Yu Tsai selected systems portfolio preview");
+  html = replaceMeta(html, "name", "twitter:card", "summary_large_image");
+  html = replaceMeta(html, "name", "twitter:title", siteConfig.englishTitle);
+  html = replaceMeta(html, "name", "twitter:description", siteConfig.englishDescription);
+  html = replaceMeta(html, "name", "twitter:image", socialImage);
+  html = replaceMeta(html, "name", "twitter:image:alt", "Min-Yu Tsai selected systems portfolio preview");
+  return replaceStructuredData(html, structuredData);
+}
+
 function createSitemap() {
-  const urls = ["/", profilePath(), ...portfolioProjects.map((project) => projectPath(project.id))];
+  const urls = ["/", profilePath(), englishPath(), ...portfolioProjects.map((project) => projectPath(project.id))];
   const entries = urls.map((path) => `  <url><loc>${absoluteSiteUrl(path)}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
 }
@@ -171,6 +229,10 @@ function staticProjectPages(): Plugin {
       const profileOutputPath = resolve(outDir, profilePath().replace(/^\//, ""), "index.html");
       mkdirSync(dirname(profileOutputPath), { recursive: true });
       writeFileSync(profileOutputPath, renderProfilePage(homeHtml), "utf8");
+
+      const englishOutputPath = resolve(outDir, englishPath().replace(/^\//, ""), "index.html");
+      mkdirSync(dirname(englishOutputPath), { recursive: true });
+      writeFileSync(englishOutputPath, renderEnglishPage(homeHtml), "utf8");
 
       for (const project of portfolioProjects) {
         const outputPath = resolve(outDir, projectPath(project.id).replace(/^\//, ""), "index.html");

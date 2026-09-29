@@ -40,9 +40,10 @@ import {
   type StatusTone,
 } from "./data/portfolio";
 import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
-import { profilePath, projectPath, siteConfig } from "./site";
+import { englishCaseSummaries } from "./data/englishPortfolio";
+import { englishPath, profilePath, projectPath, siteConfig } from "./site";
 
-type ArchiveFilter = ProjectLane | "all";
+type ArchiveFilter = ProjectLane | "all" | "case-study" | "award" | "coursework";
 
 type StatusPillProps = {
   tone: StatusTone;
@@ -52,9 +53,27 @@ type StatusPillProps = {
 type PageRoute =
   | { kind: "home" }
   | { kind: "profile" }
+  | { kind: "english" }
   | { kind: "project"; projectId: string };
 
-const archiveFilters: ArchiveFilter[] = ["all", "featured", "research", "proposal", "academic", "tool", "creative"];
+const archiveLaneFilters: Array<ProjectLane | "all"> = ["all", "featured", "research", "proposal", "academic", "tool", "creative"];
+const archiveQuickFilters: Array<{ id: Extract<ArchiveFilter, "case-study" | "award" | "coursework">; label: string; eyebrow: string }> = [
+  { id: "case-study", label: "完整 Case Study", eyebrow: "六件可深入閱讀的旗艦案例，含公開素材、佐證與範圍說明" },
+  { id: "award", label: "獲獎", eyebrow: "保留已明確列示獎項的作品，不把入圍、審查或原型混為獲獎" },
+  { id: "coursework", label: "課程實作", eyebrow: "控制、半導體、訊號與軟硬整合的課程型實作紀錄" },
+];
+const archiveFilterInfo: Record<ArchiveFilter, { label: string; eyebrow: string }> = {
+  all: laneLabels.all,
+  featured: laneLabels.featured,
+  research: laneLabels.research,
+  proposal: laneLabels.proposal,
+  academic: laneLabels.academic,
+  tool: laneLabels.tool,
+  creative: laneLabels.creative,
+  "case-study": archiveQuickFilters[0],
+  award: archiveQuickFilters[1],
+  coursework: archiveQuickFilters[2],
+};
 const orderedPortfolioProjects = [...portfolioProjects].sort(
   (left, right) => Number.parseInt(left.sequence, 10) - Number.parseInt(right.sequence, 10),
 );
@@ -91,11 +110,16 @@ function isProfilePath(pathname: string) {
   return /^\/profile(?:\/|\/index\.html)?$/.test(pathname);
 }
 
+function isEnglishPath(pathname: string) {
+  return /^\/en(?:\/|\/index\.html)?$/.test(pathname);
+}
+
 function usePageRoute() {
   const readPageRoute = (): PageRoute => {
     const pathProjectId = parseProjectPath(window.location.pathname);
     if (pathProjectId) return { kind: "project", projectId: pathProjectId };
     if (isProfilePath(window.location.pathname)) return { kind: "profile" };
+    if (isEnglishPath(window.location.pathname)) return { kind: "english" };
 
     const legacyProjectId = parseProjectHash(window.location.hash);
     return legacyProjectId ? { kind: "project", projectId: legacyProjectId } : { kind: "home" };
@@ -112,6 +136,11 @@ function usePageRoute() {
 
       if (isProfilePath(window.location.pathname)) {
         setRoute({ kind: "profile" });
+        return;
+      }
+
+      if (isEnglishPath(window.location.pathname)) {
+        setRoute({ kind: "english" });
         return;
       }
 
@@ -408,9 +437,16 @@ function ProjectArchive({
   onFilterChange: (filter: ArchiveFilter) => void;
 }) {
   const visibleProjects = useMemo(
-    () => (filter === "all" ? portfolioProjects : portfolioProjects.filter((project) => project.lane === filter)),
+    () => {
+      if (filter === "all") return portfolioProjects;
+      if (filter === "case-study") return portfolioProjects.filter((project) => getCaseStudy(project.id));
+      if (filter === "award") return portfolioProjects.filter((project) => project.statusTone === "award");
+      if (filter === "coursework") return portfolioProjects.filter((project) => project.lane === "academic");
+      return portfolioProjects.filter((project) => project.lane === filter);
+    },
     [filter],
   );
+  const activeFilter = archiveFilterInfo[filter];
 
   return (
     <section id="archive" className="archive-section" aria-labelledby="archive-heading">
@@ -420,24 +456,45 @@ function ProjectArchive({
           <h2 id="archive-heading">作品檔案庫</h2>
           <p>把已完成的成果、研究型原型、計畫、課程實作與創作企畫放在同一份索引中，但不讓不同狀態混在一起。</p>
         </div>
-        <p className="archive-count">{portfolioProjects.length.toString().padStart(2, "0")} FILES<br />STATUS-BOUND</p>
+        <p className="archive-count">{visibleProjects.length.toString().padStart(2, "0")} / {portfolioProjects.length.toString().padStart(2, "0")} FILES<br />STATUS-BOUND</p>
       </div>
 
       <div className="archive-filter-wrap reveal" aria-label="作品分類篩選">
-        <div className="archive-filter-list" role="group" aria-label="作品分類">
-          {archiveFilters.map((lane) => (
-            <button
-              className={lane === filter ? "archive-filter is-active" : "archive-filter"}
-              key={lane}
-              type="button"
-              aria-pressed={lane === filter}
-              onClick={() => onFilterChange(lane)}
-            >
-              {laneLabels[lane].label}
-            </button>
-          ))}
+        <div className="archive-filter-groups">
+          <div className="archive-filter-group">
+            <p>分類</p>
+            <div className="archive-filter-list" role="group" aria-label="作品分類">
+              {archiveLaneFilters.map((lane) => (
+                <button
+                  className={lane === filter ? "archive-filter is-active" : "archive-filter"}
+                  key={lane}
+                  type="button"
+                  aria-pressed={lane === filter}
+                  onClick={() => onFilterChange(lane)}
+                >
+                  {archiveFilterInfo[lane].label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="archive-filter-group">
+            <p>快速篩選</p>
+            <div className="archive-filter-list" role="group" aria-label="作品快速篩選">
+              {archiveQuickFilters.map((quickFilter) => (
+                <button
+                  className={quickFilter.id === filter ? "archive-filter is-active" : "archive-filter"}
+                  key={quickFilter.id}
+                  type="button"
+                  aria-pressed={quickFilter.id === filter}
+                  onClick={() => onFilterChange(quickFilter.id)}
+                >
+                  {quickFilter.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <p>{laneLabels[filter].eyebrow}</p>
+        <p className="archive-filter-copy">{activeFilter.eyebrow}</p>
       </div>
 
       <m.ul className="archive-grid" aria-label="專案清單" layout transition={{ layout: { duration: 0.34, ease: "easeOut" } }}>
@@ -465,6 +522,10 @@ function ProjectArchive({
               </span>
               <span className="archive-card-title">{project.title}</span>
               <span className="archive-card-summary">{project.summary}</span>
+              <span className="archive-card-meta">
+                <span>{/^20\d{2}$/.test(project.year) ? `YEAR / ${project.year}` : `TYPE / ${project.year}`}</span>
+                <span>ROLE / {project.role}</span>
+              </span>
               <span className="archive-card-bottom">
                 <span>{project.lane === "academic" ? "ACADEMIC LAB" : project.category}</span>
                 <MoveRight size={17} />
@@ -1213,6 +1274,122 @@ function ProfilePage() {
   );
 }
 
+function EnglishPage() {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      headingRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <m.div
+      animate={{ opacity: 1, y: 0 }}
+      className="english-page"
+      exit={{ opacity: 0, y: -18 }}
+      initial={{ opacity: 0, y: 18 }}
+      transition={{ duration: 0.34, ease: "easeOut" }}
+    >
+      <a
+        className="skip-link"
+        href="#english-main"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("english-main")?.focus();
+        }}
+      >
+        Skip to main content
+      </a>
+      <header className="detail-topbar english-topbar">
+        <a className="detail-brand" href="/" aria-label="Return to the Chinese portfolio">
+          <span>MY</span>
+          <span>01</span>
+        </a>
+        <p>SELECTED CASES / EN</p>
+        <a className="detail-back" href="/" aria-label="Open the Chinese portfolio">
+          <ArrowLeft size={18} /> <span>中文版本</span>
+        </a>
+      </header>
+
+      <main className="english-page-main" id="english-main" lang="en" tabIndex={-1}>
+        <section className="english-hero" aria-labelledby="english-heading">
+          <div>
+            <p className="english-kicker">MIN-YU TSAI / SELECTED SYSTEMS PORTFOLIO</p>
+            <h1 ref={headingRef} id="english-heading" tabIndex={-1}>Systems that carry research into usable work.</h1>
+            <p className="english-lead">A concise selection of six projects across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education. Each case stays within its public scope.</p>
+            <div className="english-hero-actions">
+              <a className="primary-action" href="#english-cases">Explore six cases <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href="/">Open Chinese portfolio <ArrowUpRight size={19} /></a>
+            </div>
+          </div>
+          <aside className="english-signal-board" aria-label="Portfolio summary">
+            <span>SELECTED WORK</span>
+            <strong>06</strong>
+            <span>FLAGSHIP CASES</span>
+            <div><span>BASE</span><strong>EE / YZU</strong></div>
+            <div><span>METHOD</span><strong>MODEL TO SYSTEM</strong></div>
+          </aside>
+        </section>
+
+        <section className="english-cases" id="english-cases" aria-labelledby="english-cases-heading">
+          <div className="english-section-heading">
+            <p>01 / SELECTED CASE STUDIES</p>
+            <div>
+              <h2 id="english-cases-heading">Six flagship projects, with public boundaries intact.</h2>
+              <p>Each card includes a concise role and outcome statement. External resources appear only when they are publicly accessible and specific to that case.</p>
+            </div>
+          </div>
+          <div className="english-case-grid">
+            {flagshipProjectIds.map((projectId, index) => {
+              const project = portfolioProjectById.get(projectId);
+              const caseStudy = getCaseStudy(projectId);
+              const summary = englishCaseSummaries[projectId];
+              if (!project) return null;
+
+              return (
+                <article className={`english-case-card accent-${project.accent}`} key={projectId}>
+                  <div className="english-case-top">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <span>{summary.category}</span>
+                  </div>
+                  <h3>{summary.title}</h3>
+                  <p>{summary.summary}</p>
+                  <dl>
+                    <div><dt>ROLE</dt><dd>{summary.role}</dd></div>
+                    <div><dt>OUTCOME</dt><dd>{summary.outcome}</dd></div>
+                  </dl>
+                  <div className="english-case-actions">
+                    <a href={projectPath(project.id)}>Read case study (ZH) <ArrowUpRight size={17} aria-hidden="true" /></a>
+                    {caseStudy?.links.map((link) => link.availability === "PUBLIC" ? (
+                      <a href={link.href} key={`${link.label}-${link.href}`} rel="noopener noreferrer" target="_blank">
+                        {link.title} <ExternalLink size={16} aria-hidden="true" />
+                      </a>
+                    ) : null)}
+                  </div>
+                  <small>PUBLIC CASE SUMMARY / Restricted source material is not linked.</small>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="english-contact" aria-labelledby="english-contact-heading">
+          <p>02 / PUBLIC CONTACT</p>
+          <div>
+            <h2 id="english-contact-heading">Start with the public record.</h2>
+            <p>For research exchange, systems prototyping, competitions, or cross-disciplinary collaboration, begin with the public case summaries and clarify scope before discussing restricted data or partner material.</p>
+          </div>
+          <a href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">GitHub / Daniel-Tsai-9487 <ArrowUpRight size={19} aria-hidden="true" /></a>
+        </section>
+      </main>
+    </m.div>
+  );
+}
+
 function App() {
   const [activeFeatured, setActiveFeatured] = useState(0);
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("all");
@@ -1220,7 +1397,8 @@ function App() {
   const pageRoute = usePageRoute();
   const projectRouteId = pageRoute.kind === "project" ? pageRoute.projectId : null;
   const isProfileRoute = pageRoute.kind === "profile";
-  useInitialSectionHash(projectRouteId !== null || isProfileRoute);
+  const isEnglishRoute = pageRoute.kind === "english";
+  useInitialSectionHash(projectRouteId !== null || isProfileRoute || isEnglishRoute);
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
@@ -1251,13 +1429,19 @@ function App() {
       return;
     }
 
+    if (isEnglishRoute) {
+      document.title = siteConfig.englishTitle;
+      previousProjectRouteRef.current = null;
+      return;
+    }
+
     document.title = siteConfig.siteName;
     const targetId = window.location.hash.slice(1);
     if (wasOnProjectPage && targetId && !targetId.startsWith("project/")) {
       pendingSectionIdRef.current = targetId;
     }
     previousProjectRouteRef.current = null;
-  }, [isProfileRoute, routedProject]);
+  }, [isEnglishRoute, isProfileRoute, routedProject]);
 
   const scrollToPendingSection = () => {
     const targetId = pendingSectionIdRef.current;
@@ -1284,6 +1468,8 @@ function App() {
             />
           ) : isProfileRoute ? (
             <ProfilePage key="profile-page" />
+          ) : isEnglishRoute ? (
+            <EnglishPage key="english-page" />
           ) : (
             <m.div
               animate={{ opacity: 1, y: 0 }}
@@ -1313,6 +1499,7 @@ function App() {
           <a href="#featured" onClick={closeMenu}>旗艦案例</a>
           <a href="#archive" onClick={closeMenu}>作品檔案</a>
           <a href={profilePath()} onClick={closeMenu}>公開概要</a>
+          <a href={englishPath()} lang="en" onClick={closeMenu}>EN</a>
           <a href="#contact" onClick={closeMenu}>合作窗口</a>
         </nav>
         <button
@@ -1345,7 +1532,6 @@ function App() {
             <div><span>FOCUS</span><strong>AI / EDGE<br />BIOMEDICAL</strong></div>
             <div><span>METHOD</span><strong>MODEL TO<br />SYSTEM</strong></div>
           </aside>
-          <div className="hero-companion" aria-hidden="true" />
           <a className="hero-scroll-cue" href="#positioning"><span>SCROLL TO ENTER</span><ArrowDownRight size={18} /></a>
         </section>
 
