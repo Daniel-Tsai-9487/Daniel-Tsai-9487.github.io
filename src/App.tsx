@@ -40,7 +40,7 @@ import {
   type ProjectLane,
   type StatusTone,
 } from "./data/portfolio";
-import { getCaseStudy, type CaseStudy } from "./data/caseStudies";
+import { getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
 import { projectPath, siteConfig } from "./site";
 
 type ArchiveFilter = ProjectLane | "all";
@@ -115,14 +115,21 @@ function useProjectRoute() {
 function useInitialSectionHash(projectRouteId: string | null) {
   const hasAppliedInitialHash = useRef(false);
 
-  useLayoutEffect(() => {
-    if (hasAppliedInitialHash.current || projectRouteId) return;
+  useEffect(() => {
+    if (hasAppliedInitialHash.current) return;
+
+    const targetId = window.location.hash.slice(1);
+    if (!targetId || targetId.startsWith("project/")) {
+      hasAppliedInitialHash.current = true;
+      return;
+    }
+
+    const target = document.getElementById(targetId);
+    if (!target) return;
 
     hasAppliedInitialHash.current = true;
-    const targetId = window.location.hash.slice(1);
-    if (!targetId || targetId.startsWith("project/")) return;
-
-    document.getElementById(targetId)?.scrollIntoView({ behavior: "auto", block: "start" });
+    const frame = window.requestAnimationFrame(() => target.scrollIntoView({ behavior: "auto", block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
   }, [projectRouteId]);
 }
 
@@ -285,15 +292,15 @@ function SystemMap() {
   return (
     <section className="system-map" aria-labelledby="system-map-heading">
       <div className="system-map-header">
-        <span><Radar size={18} aria-hidden="true" /> CURRENT WORKSTREAMS</span>
-        <span>{String(currentThreads.length).padStart(2, "0")} ACTIVE / 2026</span>
+        <span><Radar size={18} aria-hidden="true" /> PUBLIC CASE TRACKS</span>
+        <span>{String(currentThreads.length).padStart(2, "0")} CASES / 2026</span>
       </div>
       <div className="system-map-intro">
         <div>
-          <p>現在正在推進</p>
-          <h2 id="system-map-heading">目前主線</h2>
+          <p>目前可公開追蹤</p>
+          <h2 id="system-map-heading">進行中的公開案例</h2>
         </div>
-        <span>每一條主線都連到可公開的 Case Study、證據與進度。</span>
+        <span>點選各案例，可查看公開素材、佐證與目前狀態。</span>
       </div>
       <ol className="system-thread-list">
         {currentThreads.map((thread, index) => (
@@ -480,23 +487,27 @@ function CaseStudyFlow({ caseStudy }: { caseStudy: CaseStudy }) {
 }
 
 function CaseStudyMediaFrame({ media }: { media: CaseStudy["media"][number] }) {
+  const hasAsset = hasPublicMediaAsset(media);
+
   return (
     <figure className="case-media-stage" aria-live="polite">
-      {media.src ? (
-        <img
-          className="case-media-source"
-          decoding="async"
-          height={900}
-          loading="lazy"
-          src={media.src}
-          alt={media.alt ?? media.title}
-          width={1600}
-        />
+      {hasAsset ? (
+        <div className="case-media-source-frame">
+          <img
+            className="case-media-source"
+            decoding="async"
+            height={900}
+            loading="lazy"
+            src={media.src}
+            alt={media.alt}
+            width={1600}
+          />
+        </div>
       ) : (
         <div className={`case-media-synthesis is-${media.kind}`}>
           <div className="case-media-synthesis-top">
             <span>{media.status}</span>
-            <span>NO SOURCE ASSET EMBEDDED</span>
+            <span>WEBSITE-NATIVE SUMMARY</span>
           </div>
           <div className="case-media-synthesis-grid" aria-hidden="true">
             <span /><span /><span /><span /><span /><span /><span /><span />
@@ -507,7 +518,15 @@ function CaseStudyMediaFrame({ media }: { media: CaseStudy["media"][number] }) {
           </div>
         </div>
       )}
-      <figcaption>{media.caption}</figcaption>
+      <figcaption>
+        <span className="case-media-caption-status">{media.status}</span>
+        <p className="case-media-provenance">
+          {hasAsset
+            ? media.provenance
+            : "此切面以網站原生摘要視覺說明案例結構與公開範圍，並非產品或介面截圖。"}
+        </p>
+        <p className="case-media-caption-copy">{media.caption}</p>
+      </figcaption>
     </figure>
   );
 }
@@ -534,6 +553,8 @@ function CaseStudyMediaNavigator({ caseStudy }: { caseStudy: CaseStudy }) {
 
   if (!activeMedia) return null;
 
+  const activeMediaHasAsset = hasPublicMediaAsset(activeMedia);
+
   const selectRelativeMedia = (offset: number) => {
     const nextIndex = (activeMediaIndex + offset + caseStudy.media.length) % caseStudy.media.length;
     setActiveMediaId(caseStudy.media[nextIndex]?.id ?? activeMedia.id);
@@ -546,12 +567,16 @@ function CaseStudyMediaNavigator({ caseStudy }: { caseStudy: CaseStudy }) {
 
   return (
     <>
-      <section className="case-study-media" aria-labelledby={`case-media-${caseStudy.projectId}`}>
+      <section id={`media-${caseStudy.projectId}`} className="case-study-media" aria-labelledby={`case-media-${caseStudy.projectId}`}>
         <div className="case-study-section-heading">
           <p>02 / PUBLIC MEDIA</p>
           <div>
-            <h3 id={`case-media-${caseStudy.projectId}`}>用可公開的訊號，導覽案例的切面</h3>
-            <p>尚未取得公開素材時，以原生資料視覺呈現案例結構，不把它包裝成真實產品截圖。</p>
+            <h3 id={`case-media-${caseStudy.projectId}`}>公開素材與案例切面</h3>
+            <p>
+              {activeMediaHasAsset
+                ? `目前顯示 ${activeMedia.status}：${activeMedia.provenance}`
+                : "目前顯示網站原生摘要視覺，用於說明案例結構與公開範圍，不把它包裝成真實產品截圖。"}
+            </p>
           </div>
         </div>
         <div className="case-media-workspace">
@@ -901,6 +926,8 @@ function ProjectDetailPage({
   const caseStudy = getCaseStudy(project.id);
 
   useEffect(() => {
+    if (window.location.hash) return;
+
     const frame = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: "auto" });
       headingRef.current?.focus({ preventScroll: true });
@@ -1142,6 +1169,17 @@ function App() {
             <div><span>FOCUS</span><strong>AI / EDGE<br />BIOMEDICAL</strong></div>
             <div><span>METHOD</span><strong>MODEL TO<br />SYSTEM</strong></div>
           </aside>
+          <img
+            alt=""
+            aria-hidden="true"
+            className="hero-companion"
+            decoding="async"
+            draggable={false}
+            fetchPriority="high"
+            height={960}
+            src="/characters/field-companion-user-provided.png"
+            width={768}
+          />
           <a className="hero-scroll-cue" href="#positioning"><span>SCROLL TO ENTER</span><ArrowDownRight size={18} /></a>
         </section>
 

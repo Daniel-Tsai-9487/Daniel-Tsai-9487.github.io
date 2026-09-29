@@ -35,16 +35,40 @@ export type CaseStudyOutcome = {
 
 export type CaseStudyMediaKind = "signal" | "workflow" | "record";
 
-export type CaseStudyMedia = {
+export type CaseStudyMediaStatus =
+  | "PUBLIC SYNTHETIC DEMO"
+  | "PUBLIC ENGINEERING VISUAL"
+  | "PUBLIC RESEARCH PROTOTYPE"
+  | "PUBLIC SYNTHESIS"
+  | "RECORD ONLY";
+
+type CaseStudyMediaBase = {
   id: string;
   label: string;
   title: string;
   caption: string;
   kind: CaseStudyMediaKind;
-  status: "PUBLIC SYNTHESIS" | "RECORD ONLY";
-  src?: string;
-  alt?: string;
 };
+
+type CaseStudyMediaWithSource = CaseStudyMediaBase & {
+  status: "PUBLIC SYNTHETIC DEMO" | "PUBLIC ENGINEERING VISUAL" | "PUBLIC RESEARCH PROTOTYPE";
+  src: string;
+  alt: string;
+  provenance: string;
+};
+
+type CaseStudyMediaWithoutSource = CaseStudyMediaBase & {
+  status: "PUBLIC SYNTHESIS" | "RECORD ONLY";
+  src?: never;
+  alt?: never;
+  provenance?: never;
+};
+
+export type CaseStudyMedia = CaseStudyMediaWithSource | CaseStudyMediaWithoutSource;
+
+export function hasPublicMediaAsset(media: CaseStudyMedia): media is CaseStudyMediaWithSource {
+  return media.src !== undefined;
+}
 
 export type CaseStudyEvidence = {
   label: string;
@@ -129,7 +153,7 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "ROLE", value: "FIRST AUTHOR", copy: "負責資料處理、模型比較與結果整理，並參與摘要及投稿資料撰寫。" },
     ],
     media: [
-      { id: "risk-window", label: "01 / RESEARCH FRAME", title: "Time-window research map", caption: "用網站原生圖像呈現時間窗、患者層級與研究流程的關係；不載入受控資料或個案畫面。", kind: "signal", status: "PUBLIC SYNTHESIS" },
+      { id: "risk-window", label: "01 / RESEARCH FRAME", title: "Time-window research map", caption: "以公開研究原型說明時間窗、患者層級與研究流程的關係；所有欄位與狀態均為方法敘事，不載入受控資料或個案畫面。", kind: "signal", status: "PUBLIC RESEARCH PROTOTYPE", src: "/case-media/vap-early-warning-prototype-dashboard.png", alt: "VAP 早期預警研究的公開方法原型，顯示研究問題、時間窗、患者層級評估與公開邊界。", provenance: "為公開作品集製作的原創研究視覺。所有流程、欄位與狀態均為方法敘事；不含受控資料、個案、效能數字、研究圖表、臨床建議或第三方資料。" },
       { id: "evaluation", label: "02 / EVALUATION", title: "Patient-level guardrail", caption: "把資料切分、校準與解釋放進同一個公開方法框架，讓模型比較的限制可被讀到。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
       { id: "conference-record", label: "03 / RECORD", title: "Conference status record", caption: "保留 ICBEI 2026 摘要接受與待發表的狀態，不以未公開圖表替代正式研究材料。", kind: "record", status: "RECORD ONLY" },
     ],
@@ -197,8 +221,8 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "ROLE", value: "TEAM LEAD", copy: "主導問題框架、系統敘事與公開表述，並與兩人團隊協作推進。" },
     ],
     media: [
-      { id: "rehab-context", label: "01 / CONTEXT", title: "Rehabilitation feedback frame", caption: "以居家吞嚥復健的回饋節點組成公開情境視圖，不將其表示為臨床或人體資料。", kind: "signal", status: "PUBLIC SYNTHESIS" },
-      { id: "synthetic-flow", label: "02 / SYNTHETIC FLOW", title: "Synthetic EIT interaction", caption: "以合成資料展示未來可能的區域回饋流程，讓技術假設與使用情境可以先被討論。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
+      { id: "synthetic-flow", label: "01 / SYNTHETIC FLOW", title: "Synthetic EIT interaction", caption: "以合成資料展示未來可能的區域回饋流程，讓技術假設與使用情境可以先被討論。", kind: "workflow", status: "PUBLIC SYNTHETIC DEMO", src: "/case-media/swallow-eit-synthetic-prototype.png", alt: "嚥域專案的合成 EIT 居家吞嚥回饋原型畫面。", provenance: "為公開作品集擷取的原創合成情境展示；不公開競賽交付檔，且沒有人體資料、硬體量測、臨床輸出或治療建議。" },
+      { id: "rehab-context", label: "02 / CONTEXT", title: "Rehabilitation feedback frame", caption: "以居家吞嚥復健的回饋節點組成公開情境視圖，不將其表示為臨床或人體資料。", kind: "signal", status: "PUBLIC SYNTHESIS" },
       { id: "finalist-record", label: "03 / RECORD", title: "Finalist status record", caption: "保留競賽入圍決賽的事實狀態，不放入尚未取得公開授權的競賽素材。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
@@ -265,7 +289,7 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "SYSTEM", value: "PYNQ-Z1", copy: "建立量化模型、HLS IP、AXI DMA 與目標板卡之間的可追蹤交接流程。" },
     ],
     media: [
-      { id: "edge-handoff", label: "01 / HANDOFF", title: "Model-to-board handoff", caption: "以公開系統圖呈現量化模型、HLS IP 與目標板卡之間的交接，不呈現私有工程檔。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
+      { id: "edge-handoff", label: "01 / HANDOFF", title: "Model-to-board handoff", caption: "以公開工程視覺呈現量化模型、HLS IP 與目標板卡之間的交接，不呈現私有工程檔。", kind: "workflow", status: "PUBLIC ENGINEERING VISUAL", src: "/case-media/biopulse-public-engineering-demo.png", alt: "BioPulse-SoC 的公開工程視覺，顯示量化模型、HLS IP、AXI DMA 與 PYNQ-Z1 的交接流程。", provenance: "為公開作品集製作的原創工程版面；不含團隊 HLS、RTL、bitstream、板卡遙測或效能量測。" },
       { id: "dma-path", label: "02 / DATA PATH", title: "AXI DMA transfer path", caption: "聚焦本人負責的 DMA、批次補齊與驗證紀錄，讓資料搬運成為可讀的系統層。", kind: "signal", status: "PUBLIC SYNTHESIS" },
       { id: "competition-record", label: "03 / RECORD", title: "FPGA competition record", caption: "保留 AMD Track 決賽入圍與 A3D3 Track 優選獎的公開狀態，未加入團隊工程資產。", kind: "record", status: "RECORD ONLY" },
     ],
@@ -332,7 +356,7 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "GOVERNANCE", value: "TRACEABLE", copy: "以 schema、trace、token ledger、拒判與人工閘門塑造可被稽核的輸出流程。" },
     ],
     media: [
-      { id: "task-map", label: "01 / ORCHESTRATION", title: "Four-task-line map", caption: "以公開系統圖整理晶圓圖、測試、感測與報告的分工，不載入產線或合作資料。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
+      { id: "task-map", label: "01 / ORCHESTRATION", title: "Four-task-line map", caption: "以公開工程視覺整理晶圓圖、測試、感測與報告的分工，不載入產線或合作資料。", kind: "workflow", status: "PUBLIC ENGINEERING VISUAL", src: "/case-media/yieldsentry-public-engineering-visual.png", alt: "YieldSentry 的公開工程視覺，顯示四條任務線、trace 紀錄與人工審核閘門。", provenance: "為公開作品集製作的原創工程版面；所有資料與狀態皆為合成示例，不含產線、STDF、prober、retest 或合作方資料。" },
       { id: "trace-guardrail", label: "02 / GOVERNANCE", title: "Trace and abstention frame", caption: "將 schema、拒判、trace 與人工閘門編成可閱讀的治理圖層，讓原型的限制可以被看見。", kind: "signal", status: "PUBLIC SYNTHESIS" },
       { id: "competition-record", label: "03 / RECORD", title: "Competition record", caption: "保留競賽佳作與系統展示的可公開事實，不上傳私有原始碼或競賽資料包。", kind: "record", status: "RECORD ONLY" },
     ],
@@ -399,8 +423,8 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "ROLE", value: "CORE WORKFLOW", copy: "負責 URS、抽取、媒合與報價核心，並與四人團隊共同完成展示。" },
     ],
     media: [
-      { id: "document-intake", label: "01 / INTAKE", title: "Document-to-structure frame", caption: "以原生流程圖呈現文件分類與結構化抽取，避免公開企業文件、URS 原文或客戶內容。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
-      { id: "quote-handoff", label: "02 / HANDOFF", title: "Quote review handoff", caption: "將術語處理、需求媒合與人工核對整理為產品流程，而不是模擬真實牌價或 ERP 畫面。", kind: "signal", status: "PUBLIC SYNTHESIS" },
+      { id: "quote-handoff", label: "01 / HANDOFF", title: "Quote review handoff", caption: "以虛構報價流程展示術語處理、需求媒合與人工核對，不使用真實牌價、ERP 畫面或客戶文件。", kind: "signal", status: "PUBLIC SYNTHETIC DEMO", src: "/case-media/erp-ai-quote-public-demo.png", alt: "ERP AI 智慧報價系統的公開合成展示，顯示文件到報價的人工審核流程與虛構報價工作區。", provenance: "為公開作品集製作的虛構報價示例；公司、產品、文件、客戶、條款、牌價與 ERP 狀態均非真實資料。" },
+      { id: "document-intake", label: "02 / INTAKE", title: "Document-to-structure frame", caption: "以原生流程圖呈現文件分類與結構化抽取，避免公開企業文件、URS 原文或客戶內容。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
       { id: "internship-record", label: "03 / RECORD", title: "Internship showcase record", caption: "保留 AI UNIVERSITY 產學實習成果發表銅獎的公開成果，不呈現合作方系統或資料。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
@@ -466,8 +490,8 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "POSITION", value: "RISK EDUCATION", copy: "以模擬、延遲資料與風險提示為核心，不將弱方向訊號包裝成投資明牌。" },
     ],
     media: [
-      { id: "market-frame", label: "01 / MARKET CONTEXT", title: "Market education frame", caption: "以產品原生視覺說明市場資料、情境回放與風險教育的關係，不展示受授權限制的資料來源。", kind: "signal", status: "PUBLIC SYNTHESIS" },
-      { id: "simulation-flow", label: "02 / SIMULATION", title: "Risk simulation flow", caption: "把歷史回放、模擬撮合與風控提示整成可閱讀的產品流程，不把回測當作獲利承諾。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
+      { id: "simulation-flow", label: "01 / SIMULATION", title: "Risk simulation flow", caption: "以延遲、合成的情境回放與風險提示展示產品流程，不把回測當作獲利承諾。", kind: "workflow", status: "PUBLIC SYNTHETIC DEMO", src: "/case-media/tradepilot-public-sandbox-demo.png", alt: "TradePilot 的公開合成沙盒畫面，顯示延遲資料、情境回放與非投資建議的風險教育狀態。", provenance: "為公開作品集製作的合成金融研究沙盒；沒有真實帳戶、券商連線、交易、即時市場資料、投資建議或報酬承諾。" },
+      { id: "market-frame", label: "02 / MARKET CONTEXT", title: "Market education frame", caption: "以產品原生視覺說明市場資料、情境回放與風險教育的關係，不展示受授權限制的資料來源。", kind: "signal", status: "PUBLIC SYNTHESIS" },
       { id: "prototype-record", label: "03 / RECORD", title: "Independent prototype record", caption: "保留以競賽規格自主開發、但未完成投稿的事實狀態。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
