@@ -24,9 +24,7 @@ import {
   Link2,
   Menu,
   Maximize2,
-  MonitorCog,
   MoveRight,
-  Network,
   Radar,
   Sparkles,
   X,
@@ -285,36 +283,39 @@ function ScrollingSubtitle() {
 
 function SystemMap() {
   return (
-    <section className="system-map" aria-label="目前進行中的專案狀態">
+    <section className="system-map" aria-labelledby="system-map-heading">
       <div className="system-map-header">
-        <span><Radar size={16} /> LIVE SYSTEM MAP</span>
-        <span>2026 / UPDATED</span>
+        <span><Radar size={18} aria-hidden="true" /> CURRENT WORKSTREAMS</span>
+        <span>{String(currentThreads.length).padStart(2, "0")} ACTIVE / 2026</span>
       </div>
-      <div className="system-map-grid" aria-hidden="true">
-        <span className="map-line map-line-a" />
-        <span className="map-line map-line-b" />
-        <span className="map-line map-line-c" />
-        <span className="map-node map-node-a"><BrainCircuit size={18} /></span>
-        <span className="map-node map-node-b"><Cpu size={18} /></span>
-        <span className="map-node map-node-c"><Network size={18} /></span>
-        <span className="map-node map-node-d"><MonitorCog size={18} /></span>
-        <span className="map-scan" />
+      <div className="system-map-intro">
+        <div>
+          <p>現在正在推進</p>
+          <h2 id="system-map-heading">目前主線</h2>
+        </div>
+        <span>每一條主線都連到可公開的 Case Study、證據與進度。</span>
       </div>
-      <div className="system-thread-list">
+      <ol className="system-thread-list">
         {currentThreads.map((thread, index) => (
-          <a className="system-thread" href={projectPath(thread.id)} key={thread.id}>
-            <span className="thread-index">0{index + 1}</span>
-            <span className="thread-copy">
-              <strong>{thread.label}</strong>
-              <small>{thread.detail}</small>
-            </span>
-            <StatusPill tone={thread.tone}>查看</StatusPill>
-          </a>
+          <li key={thread.id}>
+            <a className="system-thread" href={projectPath(thread.id)}>
+              <span className="thread-index">{String(index + 1).padStart(2, "0")}</span>
+              <span className="thread-copy">
+                <span className="thread-meta">
+                  <small className="thread-lane">{thread.lane}</small>
+                  <span className={`thread-status thread-status-${thread.tone}`}><span aria-hidden="true" />{thread.status}</span>
+                </span>
+                <strong>{thread.label}</strong>
+                <span className="thread-detail">{thread.detail}</span>
+                <span className="thread-next"><em>下一步</em>{thread.next}</span>
+              </span>
+              <span className="thread-action">查看個案 <ArrowUpRight size={17} aria-hidden="true" /></span>
+            </a>
+          </li>
         ))}
-      </div>
+      </ol>
       <div className="system-map-footer">
-        <span><span className="signal-dot" /> 已確認成果</span>
-        <span><span className="signal-dot signal-dot-coral" /> 進行中或待審查</span>
+        <span><span className="signal-dot" /> 狀態與公開範圍均以各案頁面為準</span>
       </div>
     </section>
   );

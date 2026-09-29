@@ -1,0 +1,8 @@
+# This independent Git repository needs its own route to Cowork's depth-1
+# Claude reviewer. It remains project-scoped rather than user-global.
+[mcp_servers.cowork_claude_review]
+command = 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
+args = ['C:\Users\User\Desktop\Vibe Coding\Cowork\.claude\scripts\cowork-peer-mcp.js', "claude"]
+
+[mcp_servers.cowork_claude_review.tools.review_with_claude]
+approval_mode = "approve"

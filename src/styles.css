@@ -2,6 +2,7 @@
   color: #101112;
   background: #f5f2ea;
   font-family: "Noto Sans TC", "Segoe UI", Arial, sans-serif;
+  font-size: 18px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -124,7 +125,7 @@ section[id] {
   background: #d8f20b;
   color: #101112;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   padding: 3px 4px;
 }
 
@@ -135,9 +136,12 @@ section[id] {
 }
 
 .main-nav a {
+  align-items: center;
   color: #d5d2cc;
-  font-size: 13px;
+  display: inline-flex;
+  font-size: 14px;
   font-weight: 700;
+  min-height: 44px;
 }
 
 .main-nav a:hover,
@@ -151,9 +155,9 @@ section[id] {
   border: 1px solid #5c5c59;
   color: #f5f2ea;
   display: none;
-  height: 36px;
+  height: 44px;
   justify-content: center;
-  width: 36px;
+  width: 44px;
 }
 
 .hero {
@@ -202,8 +206,10 @@ section[id] {
 .contact-readiness > span,
   .contact-social-meta > span:first-child {
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
 }
 
 .eyebrow {
@@ -300,7 +306,8 @@ section[id] {
 
 .system-map {
   border: 1px solid #50514c;
-  min-height: 516px;
+  background: #171817;
+  min-height: 560px;
   overflow: hidden;
   position: relative;
 }
@@ -311,7 +318,7 @@ section[id] {
   color: #bebcb4;
   display: flex;
   justify-content: space-between;
-  padding: 11px 14px;
+  padding: 14px 17px;
 }
 
 .system-map-header {
@@ -325,118 +332,87 @@ section[id] {
   gap: 7px;
 }
 
-.system-map-grid {
-  background-color: #171817;
-  background-image: linear-gradient(#242522 1px, transparent 1px), linear-gradient(90deg, #242522 1px, transparent 1px);
-  background-size: 46px 46px;
+.system-map-intro {
+  align-items: end;
+  background-color: #1e1f1c;
+  background-image: linear-gradient(#292a26 1px, transparent 1px), linear-gradient(90deg, #292a26 1px, transparent 1px);
+  background-size: 36px 36px;
   border-bottom: 1px solid #454641;
-  height: 216px;
-  overflow: hidden;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 21px 17px 19px;
   position: relative;
 }
 
-.map-line {
-  background: #73756c;
-  display: block;
-  height: 1px;
-  position: absolute;
-  transform-origin: left center;
-}
-
-.map-line-a {
-  left: 14%;
-  top: 36%;
-  transform: rotate(16deg);
-  width: 42%;
-}
-
-.map-line-b {
+.system-map-intro::after {
   background: #d8f20b;
-  left: 43%;
-  top: 53%;
-  transform: rotate(-21deg);
-  width: 38%;
-}
-
-.map-line-c {
-  left: 19%;
-  top: 74%;
-  transform: rotate(-30deg);
-  width: 30%;
-}
-
-.map-node {
-  align-items: center;
-  background: #101112;
-  border: 2px solid #d8f20b;
-  color: #d8f20b;
-  display: flex;
-  height: 42px;
-  justify-content: center;
-  position: absolute;
-  width: 42px;
-  z-index: 2;
-}
-
-.map-node-a {
-  left: 10%;
-  top: 27%;
-}
-
-.map-node-b {
-  left: 51%;
-  top: 49%;
-}
-
-.map-node-c {
-  right: 13%;
-  top: 23%;
-}
-
-.map-node-d {
-  border-color: #ff5a3a;
-  bottom: 18%;
-  color: #ff5a3a;
-  left: 29%;
-}
-
-.map-scan {
-  background: #d8f20b;
-  height: 2px;
+  bottom: 0;
+  content: "";
+  height: 3px;
   left: 0;
-  opacity: 0.55;
+  opacity: 0.75;
   position: absolute;
-  top: 0;
-  transform: translateY(0);
-  width: 100%;
-  animation: map-scan 3.6s linear infinite;
+  width: 34%;
+}
+
+.system-map-intro p,
+.thread-lane,
+.thread-next em {
+  color: #d8f20b;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.system-map-intro h2 {
+  color: #f5f2ea;
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: 34px;
+  line-height: 1;
+  margin-top: 7px;
+}
+
+.system-map-intro > span {
+  color: #c2c0b9;
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 310px;
+  text-align: right;
 }
 
 .system-thread-list {
   display: grid;
+  list-style: none;
 }
 
 .system-thread {
-  align-items: center;
+  align-items: start;
   background: transparent;
   border: 0;
   border-bottom: 1px solid #363733;
   color: #f5f2ea;
   display: grid;
-  gap: 10px;
-  grid-template-columns: 30px 1fr auto;
-  min-height: 58px;
-  padding: 9px 13px;
+  gap: 13px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-height: 98px;
+  padding: 15px 17px;
   text-align: left;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .system-thread:hover,
 .system-thread:focus-visible {
-  background: #262723;
+  background: #252622;
+  box-shadow: inset 4px 0 0 #d8f20b;
 }
 
 .thread-index {
   color: #a5a39c;
+  font-size: 15px;
+  padding-top: 2px;
 }
 
 .thread-copy {
@@ -445,23 +421,87 @@ section[id] {
   min-width: 0;
 }
 
+.thread-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .thread-copy strong {
-  font-size: 14px;
+  font-size: 19px;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
-.thread-copy small {
+.thread-lane {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.thread-status {
+  align-items: center;
+  border: 1px solid currentColor;
+  display: inline-flex;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 5px;
+  line-height: 1.2;
+  padding: 3px 6px;
+}
+
+.thread-status > span {
+  background: currentColor;
+  display: inline-block;
+  height: 5px;
+  width: 5px;
+}
+
+.thread-status-accepted { color: #5dc7ff; }
+.thread-status-review { color: #ff8d75; }
+.thread-status-prototype { color: #bd85ff; }
+
+.thread-detail {
   color: #b9b6ae;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.thread-next {
+  align-items: baseline;
+  color: #d1cec6;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  gap: 7px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.thread-next em {
+  color: #8d8b84;
+  font-size: 13px;
+}
+
+.thread-action {
+  align-items: center;
+  color: #d8f20b;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  gap: 5px;
+  padding-top: 5px;
+  white-space: nowrap;
 }
 
 .system-map-footer {
   border-top: 1px solid #454641;
   color: #a5a39c;
-  font-size: 10px;
+  font-size: 13px;
   gap: 12px;
   justify-content: flex-start;
+  line-height: 1.45;
 }
 
 .system-map-footer span {
@@ -480,12 +520,12 @@ section[id] {
   border: 1px solid currentColor;
   display: inline-flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   gap: 6px;
   line-height: 1.25;
   max-width: 100%;
-  padding: 4px 6px;
+  padding: 5px 8px;
   text-align: left;
 }
 
@@ -523,7 +563,7 @@ section[id] {
 }
 
 .hero-meta strong {
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.45;
 }
 
@@ -533,7 +573,7 @@ section[id] {
   color: #d8f20b;
   display: flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   gap: 8px;
   position: absolute;
@@ -590,7 +630,7 @@ section[id] {
   align-self: end;
   display: grid;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   gap: 10px;
 }
@@ -655,8 +695,8 @@ section[id] {
 
 .story-beat span {
   color: #c8c5bd;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 .scrolling-subtitle {
@@ -701,8 +741,8 @@ section[id] {
 
 .section-heading div > p {
   color: #575850;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 16px;
   max-width: 620px;
 }
@@ -804,7 +844,7 @@ section[id] {
 .project-english {
   color: #c2c0b9;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.45;
   margin-top: 9px;
@@ -820,8 +860,8 @@ section[id] {
 .project-detail {
   border-left: 3px solid var(--accent);
   color: #c2c0b9;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 22px;
   max-width: 545px;
   padding-left: 12px;
@@ -839,7 +879,7 @@ section[id] {
   border: 1px solid #62635d;
   color: #dedbd3;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   padding: 6px 8px;
 }
 
@@ -908,7 +948,7 @@ section[id] {
   background: #101112;
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   left: 0;
   padding: 9px 12px;
@@ -964,7 +1004,7 @@ section[id] {
 .visual-coordinate {
   color: #101112;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   position: absolute;
   z-index: 5;
@@ -1010,7 +1050,7 @@ section[id] {
   color: #575850;
   font-size: 13px;
   font-weight: 800;
-  min-height: 38px;
+  min-height: 44px;
   padding: 7px 11px;
   white-space: nowrap;
 }
@@ -1026,7 +1066,7 @@ section[id] {
 .archive-filter-wrap > p {
   align-self: center;
   color: #5d5e58;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   text-align: right;
 }
@@ -1094,7 +1134,7 @@ section[id] {
 .archive-card-flagship {
   color: #356008;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
@@ -1124,8 +1164,8 @@ section[id] {
 
 .archive-card-summary {
   color: #5a5b55;
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.65;
   overflow-wrap: anywhere;
   position: relative;
   z-index: 1;
@@ -1139,7 +1179,7 @@ section[id] {
 
 .archive-card-bottom {
   color: #74746e;
-  font-size: 10px;
+  font-size: 13px;
   margin-top: auto;
 }
 
@@ -1228,7 +1268,7 @@ section[id] {
 
 .archive-detail-bottom > p:first-child {
   color: #c6c3bb;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.7;
   max-width: 620px;
 }
@@ -1246,7 +1286,7 @@ section[id] {
   align-items: flex-start;
   color: var(--accent);
   display: flex;
-  font-size: 12px;
+  font-size: 14px;
   gap: 7px;
   grid-column: 1 / -1;
   line-height: 1.6;
@@ -1292,8 +1332,8 @@ section[id] {
 
 .profile-statement > p:last-child {
   color: #c9c6be;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 18px;
 }
 
@@ -1320,7 +1360,7 @@ section[id] {
 
 .achievement-strip span {
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.5;
 }
@@ -1343,7 +1383,7 @@ section[id] {
 .trajectory-list time {
   color: #641e11;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   padding-top: 3px;
 }
@@ -1353,8 +1393,8 @@ section[id] {
 }
 
 .trajectory-list p {
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 7px;
   max-width: 710px;
 }
@@ -1387,7 +1427,7 @@ section[id] {
 .recognition-year {
   color: #4d4f19;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -1403,7 +1443,7 @@ section[id] {
 }
 
 .recognition-row strong {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.45;
 }
 
@@ -1449,8 +1489,8 @@ section[id] {
 
 .capability p {
   color: #575850;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 13px;
 }
 
@@ -1465,7 +1505,7 @@ section[id] {
 .capability li {
   background: #d9d7ce;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   padding: 5px 6px;
 }
 
@@ -1525,8 +1565,8 @@ section[id] {
 
 .contact-readiness p {
   color: #c4c1b9;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 17px;
 }
 
@@ -1578,7 +1618,7 @@ section[id] {
 
 .contact-social-meta > span:first-child {
   color: #a9a7a0;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .contact-social-meta > span:last-child {
@@ -1593,7 +1633,7 @@ section[id] {
   color: #9d9c95;
   display: flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   justify-content: space-between;
   padding: 20px 5vw;
@@ -1633,7 +1673,7 @@ section[id] {
   background: #d8f20b;
   color: #101112;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   padding: 3px 4px;
 }
 
@@ -1645,7 +1685,7 @@ section[id] {
 .detail-board-label,
 .detail-board-metric {
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1730,7 +1770,7 @@ section[id] {
 .detail-status-row > span:last-child {
   color: #aaa8a0;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1888,13 +1928,13 @@ section[id] {
 .detail-facts dt {
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .detail-facts dd {
   color: #f5f2ea;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.5;
   margin: 0;
   overflow-wrap: anywhere;
@@ -1918,7 +1958,7 @@ section[id] {
   align-items: flex-start;
   color: #d0cdc5;
   display: flex;
-  font-size: 16px;
+  font-size: 17px;
   gap: 10px;
   line-height: 1.7;
 }
@@ -1952,7 +1992,7 @@ section[id] {
 .case-study-boundaries > div > p {
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -2010,8 +2050,8 @@ section[id] {
 
 .case-study-brief li {
   color: #cfccc4;
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.65;
   padding-left: 16px;
   position: relative;
 }
@@ -2055,7 +2095,7 @@ section[id] {
 
 .case-study-section-heading h3 + p {
   color: #aaa8a0;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.7;
   margin-top: 14px;
 }
@@ -2118,7 +2158,7 @@ section[id] {
   color: #b4b1a8;
   display: flex;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   gap: 16px;
   justify-content: space-between;
@@ -2196,7 +2236,7 @@ section[id] {
 .case-link-index-intro p {
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -2294,7 +2334,7 @@ section[id] {
 .case-media-control span {
   color: #a9a7a0;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -2303,7 +2343,7 @@ section[id] {
 }
 
 .case-media-control strong {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -2346,7 +2386,7 @@ section[id] {
   border-bottom: 1px solid #4c4d48;
   color: #a9a7a0;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -2397,12 +2437,12 @@ section[id] {
 .case-media-dialog-footer span {
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
 }
 
 .case-media-dialog-footer strong {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.4;
   overflow-wrap: anywhere;
   text-align: right;
@@ -2464,8 +2504,8 @@ section[id] {
 
 .case-flow-step p {
   color: #bdbab2;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 12px;
   overflow-wrap: anywhere;
 }
@@ -2507,7 +2547,7 @@ section[id] {
 
 .case-chapter-index span:last-child {
   color: #a9a7a0;
-  font-size: 10px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
@@ -2522,8 +2562,8 @@ section[id] {
 
 .case-chapter p {
   color: #c9c6be;
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: 17px;
+  line-height: 1.8;
   margin-top: 18px;
 }
 
@@ -2565,7 +2605,7 @@ section[id] {
 .case-milestone-list li > div > span {
   color: #c4c1b9;
   display: block;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.65;
   margin-top: 12px;
 }
@@ -2608,7 +2648,7 @@ section[id] {
 .case-link-status {
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -2624,8 +2664,8 @@ section[id] {
 
 .case-evidence-card p {
   color: #c4c1b9;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 15px;
 }
 
@@ -2633,7 +2673,7 @@ section[id] {
   color: #8d8b84;
   display: block;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.45;
   margin-top: 18px;
@@ -2704,7 +2744,7 @@ section[id] {
 
 .case-link-main strong {
   color: currentColor;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -2751,8 +2791,8 @@ section[id] {
 
 .case-outcome p {
   color: #c1beb5;
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   margin-top: 17px;
 }
 
@@ -2772,7 +2812,7 @@ section[id] {
 .case-public-scope-summary {
   color: #c9c6be;
   display: block;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.7;
   margin-top: 16px;
   max-width: 420px;
@@ -2787,7 +2827,7 @@ section[id] {
   border-bottom: 1px solid #4c4d48;
   color: #d0cdc5;
   display: flex;
-  font-size: 16px;
+  font-size: 17px;
   gap: 12px;
   line-height: 1.7;
   padding: 17px 0;
@@ -2841,7 +2881,7 @@ section[id] {
   border-left: 1px solid #4c4d48;
   color: var(--accent);
   font-family: Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 14px;
   flex-direction: column;
   font-weight: 700;
   justify-content: center;
@@ -2872,10 +2912,6 @@ section[id] {
   transform: translateY(0);
 }
 
-@keyframes map-scan {
-  to { transform: translateY(216px); }
-}
-
 @keyframes orbit-a {
   to { transform: rotate(380deg); }
 }
@@ -2899,7 +2935,6 @@ section[id] {
     transition: none;
   }
 
-  .map-scan,
   .visual-orbit,
   .case-media-synthesis-grid::after {
     animation: none;
@@ -3218,20 +3253,19 @@ section[id] {
   }
 
   .system-map-header {
-    gap: 9px;
+    gap: 5px;
     min-width: 0;
-    overflow: hidden;
     padding-left: 12px;
     padding-right: 12px;
   }
 
-  .system-map-header span {
+  .system-map-header span:first-child,
+  .system-map-header span:last-child {
+    font-size: 12px;
     min-width: 0;
   }
 
   .system-map-header span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -3239,16 +3273,28 @@ section[id] {
     flex-wrap: wrap;
   }
 
-  .system-map-grid {
-    background-size: 38px 38px;
-  }
-
   .system-thread {
     min-inline-size: 0;
   }
 
-  .system-map {
-    min-height: 500px;
+  .system-map-intro {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .system-map-intro > span {
+    text-align: left;
+  }
+
+  .system-thread {
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-height: 0;
+    padding: 15px 12px;
+  }
+
+  .thread-action {
+    grid-column: 2;
+    padding-top: 0;
   }
 
   .hero-meta {
@@ -3398,7 +3444,7 @@ section[id] {
   }
 
   .archive-facts strong {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .detail-topbar {
@@ -3419,7 +3465,7 @@ section[id] {
   }
 
   .detail-back {
-    font-size: 12px;
+    font-size: 14px;
     white-space: nowrap;
   }
 
@@ -3446,7 +3492,7 @@ section[id] {
   }
 
   .detail-english {
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .detail-status-row {
