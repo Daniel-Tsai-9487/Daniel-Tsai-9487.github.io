@@ -32,7 +32,6 @@ import {
 import {
   achievements,
   currentThreads,
-  featuredProjects,
   laneLabels,
   portfolioProjects,
   storyBeats,
@@ -40,8 +39,8 @@ import {
   type ProjectLane,
   type StatusTone,
 } from "./data/portfolio";
-import { getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
-import { projectPath, siteConfig } from "./site";
+import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
+import { profilePath, projectPath, siteConfig } from "./site";
 
 type ArchiveFilter = ProjectLane | "all";
 
@@ -50,10 +49,20 @@ type StatusPillProps = {
   children: ReactNode;
 };
 
+type PageRoute =
+  | { kind: "home" }
+  | { kind: "profile" }
+  | { kind: "project"; projectId: string };
+
 const archiveFilters: ArchiveFilter[] = ["all", "featured", "research", "proposal", "academic", "tool", "creative"];
 const orderedPortfolioProjects = [...portfolioProjects].sort(
   (left, right) => Number.parseInt(left.sequence, 10) - Number.parseInt(right.sequence, 10),
 );
+const portfolioProjectById = new Map(portfolioProjects.map((project) => [project.id, project] as const));
+const flagshipProjects = flagshipProjectIds.flatMap((projectId) => {
+  const project = portfolioProjectById.get(projectId);
+  return project ? [project] : [];
+});
 const loadMotionFeatures = () => import("./motionFeatures").then((module) => module.default);
 
 function parseProjectHash(hash: string) {
@@ -78,45 +87,61 @@ function parseProjectPath(pathname: string) {
   }
 }
 
-function useProjectRoute() {
-  const readProjectRoute = () => parseProjectPath(window.location.pathname) ?? parseProjectHash(window.location.hash);
-  const [projectId, setProjectId] = useState<string | null>(readProjectRoute);
+function isProfilePath(pathname: string) {
+  return /^\/profile(?:\/|\/index\.html)?$/.test(pathname);
+}
+
+function usePageRoute() {
+  const readPageRoute = (): PageRoute => {
+    const pathProjectId = parseProjectPath(window.location.pathname);
+    if (pathProjectId) return { kind: "project", projectId: pathProjectId };
+    if (isProfilePath(window.location.pathname)) return { kind: "profile" };
+
+    const legacyProjectId = parseProjectHash(window.location.hash);
+    return legacyProjectId ? { kind: "project", projectId: legacyProjectId } : { kind: "home" };
+  };
+  const [route, setRoute] = useState<PageRoute>(readPageRoute);
 
   useEffect(() => {
-    const syncProjectRoute = () => {
+    const syncPageRoute = () => {
       const pathProjectId = parseProjectPath(window.location.pathname);
       if (pathProjectId) {
-        setProjectId(pathProjectId);
+        setRoute({ kind: "project", projectId: pathProjectId });
+        return;
+      }
+
+      if (isProfilePath(window.location.pathname)) {
+        setRoute({ kind: "profile" });
         return;
       }
 
       const legacyProjectId = parseProjectHash(window.location.hash);
       if (legacyProjectId) {
         window.history.replaceState(null, "", projectPath(legacyProjectId));
-        setProjectId(legacyProjectId);
+        setRoute({ kind: "project", projectId: legacyProjectId });
         return;
       }
 
-      setProjectId(null);
+      setRoute({ kind: "home" });
     };
 
-    syncProjectRoute();
-    window.addEventListener("popstate", syncProjectRoute);
-    window.addEventListener("hashchange", syncProjectRoute);
+    syncPageRoute();
+    window.addEventListener("popstate", syncPageRoute);
+    window.addEventListener("hashchange", syncPageRoute);
     return () => {
-      window.removeEventListener("popstate", syncProjectRoute);
-      window.removeEventListener("hashchange", syncProjectRoute);
+      window.removeEventListener("popstate", syncPageRoute);
+      window.removeEventListener("hashchange", syncPageRoute);
     };
   }, []);
 
-  return projectId;
+  return route;
 }
 
-function useInitialSectionHash(projectRouteId: string | null) {
+function useInitialSectionHash(isStandalonePage: boolean) {
   const hasAppliedInitialHash = useRef(false);
 
   useEffect(() => {
-    if (hasAppliedInitialHash.current) return;
+    if (hasAppliedInitialHash.current || isStandalonePage) return;
 
     const targetId = window.location.hash.slice(1);
     if (!targetId || targetId.startsWith("project/")) {
@@ -130,7 +155,7 @@ function useInitialSectionHash(projectRouteId: string | null) {
     hasAppliedInitialHash.current = true;
     const frame = window.requestAnimationFrame(() => target.scrollIntoView({ behavior: "auto", block: "start" }));
     return () => window.cancelAnimationFrame(frame);
-  }, [projectRouteId]);
+  }, [isStandalonePage]);
 }
 
 const fieldNotes = [
@@ -290,17 +315,17 @@ function ScrollingSubtitle() {
 
 function SystemMap() {
   return (
-    <section className="system-map" aria-labelledby="system-map-heading">
+    <section id="current-work" className="system-map" aria-labelledby="system-map-heading">
       <div className="system-map-header">
-        <span><Radar size={18} aria-hidden="true" /> PUBLIC CASE TRACKS</span>
-        <span>{String(currentThreads.length).padStart(2, "0")} CASES / 2026</span>
+        <span><Radar size={18} aria-hidden="true" /> CURRENT WORK / PUBLIC STATUS</span>
+        <span>{String(currentThreads.length).padStart(2, "0")} TRACKS / 2026</span>
       </div>
       <div className="system-map-intro">
         <div>
-          <p>目前可公開追蹤</p>
-          <h2 id="system-map-heading">進行中的公開案例</h2>
+          <p>PUBLIC STATUS BOARD</p>
+          <h2 id="system-map-heading">目前進行中工作</h2>
         </div>
-        <span>點選案例查看公開詳情。</span>
+        <span>代表成果以外，這些公開工作仍在持續推進。</span>
       </div>
       <ol className="system-thread-list">
         {currentThreads.map((thread, index) => (
@@ -316,7 +341,7 @@ function SystemMap() {
                 <span className="thread-detail">{thread.detail}</span>
                 <span className="thread-next"><em>下一步</em>{thread.next}</span>
               </span>
-              <span className="thread-action">查看個案 <ArrowUpRight size={17} aria-hidden="true" /></span>
+              <span className="thread-action">開啟公開頁面 <ArrowUpRight size={17} aria-hidden="true" /></span>
             </a>
           </li>
         ))}
@@ -362,7 +387,7 @@ function FeaturedStage({ project }: { project: PortfolioProject }) {
       </div>
       <div className="featured-visual" aria-hidden="true">
         <span className="visual-number">{project.sequence}</span>
-        <span className="visual-label">REPRESENTATIVE FILE</span>
+        <span className="visual-label">FLAGSHIP CASE</span>
         <div className="visual-orbit visual-orbit-a" />
         <div className="visual-orbit visual-orbit-b" />
         <div className="visual-module visual-module-a"><Cpu size={39} /></div>
@@ -1043,12 +1068,159 @@ function ProjectDetailPage({
   );
 }
 
+function ProfilePage() {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      headingRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <m.div
+      animate={{ opacity: 1, y: 0 }}
+      className="profile-page"
+      exit={{ opacity: 0, y: -18 }}
+      initial={{ opacity: 0, y: 18 }}
+      transition={{ duration: 0.34, ease: "easeOut" }}
+    >
+      <a
+        className="skip-link"
+        href="#profile-detail"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("profile-detail")?.focus();
+        }}
+      >
+        跳至主要內容
+      </a>
+      <header className="detail-topbar">
+        <a className="detail-brand" href="/" aria-label="回到網站首頁">
+          <span>MY</span>
+          <span>01</span>
+        </a>
+        <p>PUBLIC PROFILE / 2026</p>
+        <a className="detail-back" href="/#contact" aria-label="返回合作與聯絡區塊">
+          <ArrowLeft size={18} /> <span>返回作品集</span>
+        </a>
+      </header>
+
+      <main className="profile-page-main" id="profile-detail" tabIndex={-1}>
+        <section className="profile-page-hero">
+          <div className="profile-page-hero-copy">
+            <p className="detail-kicker">PUBLIC PROFESSIONAL SUMMARY</p>
+            <h1 ref={headingRef} tabIndex={-1}>蔡旻佑</h1>
+            <p className="profile-page-english">MIN-YU TSAI / BIOMEDICAL AI · EDGE SYSTEMS · INTELLIGENT WORKFLOWS</p>
+            <p className="profile-page-lead">以生醫 AI、邊緣運算與智慧工作流為主軸，從問題定義、模型方法到系統交接，持續累積跨領域的實作經驗。</p>
+            <div className="profile-page-actions">
+              <a className="primary-action" href="/#featured">查看六件旗艦案例 <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={19} /></a>
+            </div>
+          </div>
+          <aside className="profile-page-signal-board" aria-hidden="true">
+            <span>PUBLIC SNAPSHOT</span>
+            <strong>06</strong>
+            <span>FLAGSHIP CASES</span>
+            <div><span>BASE</span><strong>EE / YZU</strong></div>
+            <div><span>METHOD</span><strong>MODEL TO SYSTEM</strong></div>
+          </aside>
+        </section>
+
+        <section className="profile-positioning-section" aria-labelledby="profile-positioning-heading">
+          <div>
+            <p className="section-index">00 / POSITIONING</p>
+            <h2 id="profile-positioning-heading">把跨域問題，<br />收斂成可交接的系統。</h2>
+          </div>
+          <p>研究型問題需要謹慎地標示資料、驗證與使用邊界；產品型問題則需要讓流程、決策與交付能被看見。我的工作重點是讓這兩種要求在同一個系統設計中對齊。</p>
+        </section>
+
+        <section className="profile-flagship-section" aria-labelledby="profile-flagship-heading">
+          <div className="profile-page-section-heading">
+            <p>01 / FLAGSHIP CASE STUDIES</p>
+            <div>
+              <h2 id="profile-flagship-heading">六件可深入閱讀的案例</h2>
+              <p>每一案都保留問題、角色、公開素材、可公開佐證與範圍說明，避免用單一成果標籤取代實際脈絡。</p>
+            </div>
+          </div>
+          <div className="profile-case-grid">
+            {flagshipProjects.map((project, index) => (
+              <m.article
+                className={`profile-case-card accent-${project.accent}`}
+                initial={{ opacity: 0, y: 16 }}
+                key={project.id}
+                transition={{ delay: index * 0.04, duration: 0.3, ease: "easeOut" }}
+                viewport={{ amount: 0.2, once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
+              >
+                <div className="profile-case-top">
+                  <span>{project.sequence}</span>
+                  <StatusPill tone={project.statusTone}>{project.status}</StatusPill>
+                </div>
+                <p>{project.category}</p>
+                <h3>{project.title}</h3>
+                <span className="profile-case-english">{project.english}</span>
+                <p className="profile-case-summary">{project.summary}</p>
+                <span className="profile-case-role">ROLE / {project.role}</span>
+                <a href={projectPath(project.id)}>開啟完整 Case Study <ArrowUpRight size={18} aria-hidden="true" /></a>
+              </m.article>
+            ))}
+          </div>
+        </section>
+
+        <section className="profile-method-section" aria-labelledby="profile-method-heading">
+          <div className="profile-page-section-heading">
+            <p>02 / WORKING METHOD</p>
+            <div>
+              <h2 id="profile-method-heading">能力要能落在工作流程裡。</h2>
+              <p>不把工具名稱當成能力本身，而是說清楚它們各自在資料、裝置、流程與公開表述中解決的問題。</p>
+            </div>
+          </div>
+          <div className="profile-method-grid">
+            {capabilityModules.slice(0, 3).map((module) => {
+              const ModuleIcon = module.icon;
+              return (
+                <article key={module.number}>
+                  <div><span>{module.number}</span><ModuleIcon size={25} aria-hidden="true" /></div>
+                  <h3>{module.title}</h3>
+                  <p>{module.copy}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="profile-contact-section" aria-labelledby="profile-contact-heading">
+          <div>
+            <p className="section-index">03 / PUBLIC CONTACT ROUTES</p>
+            <h2 id="profile-contact-heading">從公開資料開始對話。</h2>
+            <p>合作、研究交流與系統原型討論，可先透過公開案例與 GitHub 了解目前可分享的工作內容；受限資料與合作內容不在本站揭露範圍內。</p>
+          </div>
+          <div className="profile-contact-links">
+            <a className="profile-github-link" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">
+              <Github size={24} aria-hidden="true" />
+              <span><small>PRIMARY PUBLIC ENTRY</small><strong>GitHub / Daniel-Tsai-9487</strong></span>
+              <ArrowUpRight size={21} aria-hidden="true" />
+            </a>
+            <a className="profile-return-link" href="/">返回完整作品集 <ArrowLeft size={18} aria-hidden="true" /></a>
+          </div>
+        </section>
+      </main>
+    </m.div>
+  );
+}
+
 function App() {
   const [activeFeatured, setActiveFeatured] = useState(0);
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("all");
   const [menuOpen, setMenuOpen] = useState(false);
-  const projectRouteId = useProjectRoute();
-  useInitialSectionHash(projectRouteId);
+  const pageRoute = usePageRoute();
+  const projectRouteId = pageRoute.kind === "project" ? pageRoute.projectId : null;
+  const isProfileRoute = pageRoute.kind === "profile";
+  useInitialSectionHash(projectRouteId !== null || isProfileRoute);
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
@@ -1057,7 +1229,7 @@ function App() {
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
     [projectRouteId],
   );
-  const activeProject = featuredProjects[activeFeatured] ?? featuredProjects[0];
+  const activeProject = flagshipProjects[activeFeatured] ?? flagshipProjects[0];
   const shellStyle = { "--scroll-progress": scrollProgress } as CSSProperties;
   const closeMenu = () => setMenuOpen(false);
 
@@ -1073,13 +1245,19 @@ function App() {
       return;
     }
 
+    if (isProfileRoute) {
+      document.title = siteConfig.profileTitle;
+      previousProjectRouteRef.current = null;
+      return;
+    }
+
     document.title = siteConfig.siteName;
     const targetId = window.location.hash.slice(1);
     if (wasOnProjectPage && targetId && !targetId.startsWith("project/")) {
       pendingSectionIdRef.current = targetId;
     }
     previousProjectRouteRef.current = null;
-  }, [routedProject]);
+  }, [isProfileRoute, routedProject]);
 
   const scrollToPendingSection = () => {
     const targetId = pendingSectionIdRef.current;
@@ -1104,6 +1282,8 @@ function App() {
               project={routedProject}
               projectIndex={orderedPortfolioProjects.findIndex((project) => project.id === routedProject.id)}
             />
+          ) : isProfileRoute ? (
+            <ProfilePage key="profile-page" />
           ) : (
             <m.div
               animate={{ opacity: 1, y: 0 }}
@@ -1130,9 +1310,9 @@ function App() {
           <span>01</span>
         </a>
         <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="主要導覽">
-          <a href="#featured" onClick={closeMenu}>代表成果</a>
+          <a href="#featured" onClick={closeMenu}>旗艦案例</a>
           <a href="#archive" onClick={closeMenu}>作品檔案</a>
-          <a href="#profile" onClick={closeMenu}>經歷與能力</a>
+          <a href={profilePath()} onClick={closeMenu}>公開概要</a>
           <a href="#contact" onClick={closeMenu}>合作窗口</a>
         </nav>
         <button
@@ -1155,13 +1335,9 @@ function App() {
             <p className="hero-english">MIN-YU TSAI</p>
             <p className="hero-lead">在生醫 AI、邊緣運算與產品系統之間，把複雜問題轉成可以討論、驗證與交接的設計。</p>
             <div className="hero-actions">
-              <a className="primary-action" href="#featured">從代表成果開始 <ArrowDownRight size={19} /></a>
+              <a className="primary-action" href="#featured">從旗艦案例開始 <ArrowDownRight size={19} /></a>
               <a className="secondary-action" href="#archive">查看完整檔案 <ArrowDownRight size={19} /></a>
             </div>
-          </div>
-
-          <div className="hero-system entry-reveal">
-            <SystemMap />
           </div>
 
           <aside className="hero-meta entry-reveal" aria-label="個人資料摘要">
@@ -1208,16 +1384,16 @@ function App() {
 
         <section id="featured" className="featured-section" aria-labelledby="featured-heading">
           <div className="section-heading reveal">
-            <p className="section-index">02 / REPRESENTATIVE WORK</p>
+              <p className="section-index">02 / SIX FLAGSHIP CASE STUDIES</p>
             <div>
-              <h2 id="featured-heading">代表成果</h2>
-              <p>先從能公開描述的核心系統開始。細節仍維持它們各自的研究、合作與驗證邊界。</p>
+                <h2 id="featured-heading">六件旗艦案例</h2>
+                <p>從可公開描述的核心系統開始。每一件都可開啟完整 Case Study，並保留各自的研究、合作與驗證邊界。</p>
             </div>
-            <p className="section-side-note">SELECT ONE<br />OPEN THE CASE</p>
+              <p className="section-side-note">06 FILES<br />OPEN THE CASE</p>
           </div>
 
           <div className="featured-selector reveal" role="group" aria-label="代表成果選擇">
-            {featuredProjects.map((project, index) => (
+            {flagshipProjects.map((project, index) => (
               <m.button
                 className={index === activeFeatured ? "featured-tab is-active" : "featured-tab"}
                 key={project.id}
@@ -1237,6 +1413,9 @@ function App() {
           <AnimatePresence initial={false} mode="wait">
             <FeaturedStage key={activeProject.id} project={activeProject} />
           </AnimatePresence>
+          <div className="featured-current-work reveal">
+            <SystemMap />
+          </div>
         </section>
 
         <ProjectArchive
@@ -1332,20 +1511,27 @@ function App() {
         <section id="contact" className="contact-section reveal" aria-labelledby="contact-heading">
           <div className="contact-grid">
             <div>
-              <p className="section-index">07 / NEXT TRANSMISSION</p>
-              <h2 id="contact-heading">下一個系統，<br />可以從一個問題開始。</h2>
-              <p>研究合作、系統原型、跨域競賽與產品實驗，都可以先從問題邊界、可公開資料與預期交付開始定義。</p>
+              <p className="section-index">07 / CONTACT & COLLABORATION</p>
+              <h2 id="contact-heading">從公開案例，<br />開始一段合作對話。</h2>
+              <p>研究交流、系統原型、跨域競賽與產品實驗，都可以先從問題邊界、可公開資料與預期交付開始定義。</p>
               <div className="contact-actions">
-                <a className="contact-action" href="#archive">從作品檔案開始 <ArrowUpRight size={21} /></a>
-                <a className="contact-secondary" href="#top">回到訊號起點 <ArrowUpRight size={19} /></a>
+                <a className="contact-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={21} /></a>
+                <a className="contact-secondary" href={profilePath()}>查看公開專業概要 <ArrowUpRight size={19} /></a>
               </div>
             </div>
             <aside className="contact-readiness" aria-label="公開個人頁面">
-              <span>PUBLIC PROFILES</span>
-              <h3>公開個人頁面</h3>
+              <span>PUBLIC CONTACT ROUTES</span>
+              <h3>公開入口</h3>
               <p>以下連結均由本人提供。研究、合作與未公開專案仍以各案例的公開範圍為準。</p>
               <nav className="contact-socials" aria-label="公開個人頁面">
                 <ul className="contact-social-list">
+                  <li>
+                    <a className="contact-social-link" href={profilePath()} aria-label="查看公開專業概要">
+                      <BookOpen size={20} aria-hidden="true" />
+                      <span className="contact-social-meta"><span>PUBLIC PROFILE</span><span>專業概要與旗艦案例</span></span>
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </a>
+                  </li>
                   <li>
                     <a className="contact-social-link" href="https://github.com/Daniel-Tsai-9487" aria-label="在新分頁開啟 GitHub 個人頁面" rel="noopener noreferrer" target="_blank">
                       <Github size={20} aria-hidden="true" />

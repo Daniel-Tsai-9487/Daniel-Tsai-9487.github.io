@@ -4,7 +4,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { getCaseStudy } from "./src/data/caseStudies";
 import { portfolioProjects, type PortfolioProject } from "./src/data/portfolio";
-import { absoluteSiteUrl, projectPath, siteConfig } from "./src/site";
+import { absoluteSiteUrl, profilePath, projectPath, siteConfig } from "./src/site";
 
 function escapeHtmlAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -117,8 +117,42 @@ function renderProjectPage(sourceHtml: string, project: PortfolioProject) {
   return replaceStructuredData(html, metadata.structuredData);
 }
 
+function renderProfilePage(sourceHtml: string) {
+  const canonical = absoluteSiteUrl(profilePath());
+  const socialImage = absoluteSiteUrl(siteConfig.defaultSocialImage);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "蔡旻佑",
+    alternateName: "Min-Yu Tsai",
+    url: canonical,
+    sameAs: [
+      "https://github.com/Daniel-Tsai-9487",
+      "https://www.facebook.com/daniel.tsai.628090/",
+      "https://www.instagram.com/daniel_tsai_0.0/",
+    ],
+    knowsAbout: ["Biomedical AI", "Edge Computing", "Intelligent Workflows"],
+  };
+  let html = sourceHtml.replace(/<title>[\s\S]*?<\/title>/, `<title>${siteConfig.profileTitle}</title>`);
+
+  html = replaceMeta(html, "name", "description", siteConfig.profileDescription);
+  html = replaceCanonical(html, canonical);
+  html = replaceMeta(html, "property", "og:title", siteConfig.profileTitle);
+  html = replaceMeta(html, "property", "og:description", siteConfig.profileDescription);
+  html = replaceMeta(html, "property", "og:type", "profile");
+  html = replaceMeta(html, "property", "og:url", canonical);
+  html = replaceMeta(html, "property", "og:image", socialImage);
+  html = replaceMeta(html, "property", "og:image:alt", "蔡旻佑公開專業概要的分享預覽圖");
+  html = replaceMeta(html, "name", "twitter:card", "summary_large_image");
+  html = replaceMeta(html, "name", "twitter:title", siteConfig.profileTitle);
+  html = replaceMeta(html, "name", "twitter:description", siteConfig.profileDescription);
+  html = replaceMeta(html, "name", "twitter:image", socialImage);
+  html = replaceMeta(html, "name", "twitter:image:alt", "蔡旻佑公開專業概要的分享預覽圖");
+  return replaceStructuredData(html, structuredData);
+}
+
 function createSitemap() {
-  const urls = ["/", ...portfolioProjects.map((project) => projectPath(project.id))];
+  const urls = ["/", profilePath(), ...portfolioProjects.map((project) => projectPath(project.id))];
   const entries = urls.map((path) => `  <url><loc>${absoluteSiteUrl(path)}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
 }
@@ -133,6 +167,10 @@ function staticProjectPages(): Plugin {
       const homeHtml = renderHomePage(sourceHtml);
 
       writeFileSync(resolve(outDir, "index.html"), homeHtml, "utf8");
+
+      const profileOutputPath = resolve(outDir, profilePath().replace(/^\//, ""), "index.html");
+      mkdirSync(dirname(profileOutputPath), { recursive: true });
+      writeFileSync(profileOutputPath, renderProfilePage(homeHtml), "utf8");
 
       for (const project of portfolioProjects) {
         const outputPath = resolve(outDir, projectPath(project.id).replace(/^\//, ""), "index.html");
