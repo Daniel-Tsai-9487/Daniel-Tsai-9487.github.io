@@ -56,6 +56,21 @@ type PageRoute =
   | { kind: "english" }
   | { kind: "project"; projectId: string };
 
+const localCharacterAssetKeys = ["hero", "profile", "nahida", "vodyanitsa", "juFufu", "huTao"] as const;
+
+type LocalCharacterAsset = (typeof localCharacterAssetKeys)[number];
+type LocalCharacterPreview = Partial<Record<LocalCharacterAsset, string>>;
+type LocalCharacterPlacement = "featured" | "media" | "flow" | "evidence" | "archive";
+
+// The local-only image map intentionally keeps character names out of the rendered UI.
+const localCharacterBackdropAssets: Record<LocalCharacterPlacement, LocalCharacterAsset> = {
+  featured: "nahida",
+  media: "juFufu",
+  flow: "vodyanitsa",
+  evidence: "nahida",
+  archive: "huTao",
+};
+
 const archiveLaneFilters: Array<ProjectLane | "all"> = ["all", "featured", "research", "proposal", "academic", "tool", "creative"];
 const archiveQuickFilters: Array<{ id: Extract<ArchiveFilter, "case-study" | "award" | "coursework">; label: string; eyebrow: string }> = [
   { id: "case-study", label: "完整 Case Study", eyebrow: "六件可深入閱讀的旗艦案例，含公開素材、佐證與範圍說明" },
@@ -83,6 +98,81 @@ const flagshipProjects = flagshipProjectIds.flatMap((projectId) => {
   return project ? [project] : [];
 });
 const loadMotionFeatures = () => import("./motionFeatures").then((module) => module.default);
+
+function isLocalCharacterPreview(value: unknown): value is LocalCharacterPreview {
+  if (!value || typeof value !== "object") return false;
+
+  const preview = value as Record<string, unknown>;
+  return localCharacterAssetKeys.some((key) => {
+    const asset = preview[key];
+    return typeof asset === "string" && asset.startsWith("https://");
+  });
+}
+
+function useLocalCharacterPreview() {
+  const [preview, setPreview] = useState<LocalCharacterPreview | null>(null);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    let isCurrent = true;
+    void fetch("/_local-preview/character", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((candidate: unknown) => {
+        if (isCurrent) setPreview(isLocalCharacterPreview(candidate) ? candidate : null);
+      })
+      .catch(() => {
+        if (isCurrent) setPreview(null);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  return preview;
+}
+
+function LocalCharacterPreviewArtwork({ placement, src }: { placement: "hero" | "profile"; src?: string }) {
+  if (!src) return null;
+
+  return (
+    <figure aria-hidden="true" className={`local-character-artwork local-character-artwork-${placement}`}>
+      <img alt="" decoding="async" src={src} />
+    </figure>
+  );
+}
+
+function hasLocalCharacterBackdrop(placement: LocalCharacterPlacement, preview: LocalCharacterPreview | null) {
+  if (!preview) return false;
+
+  return Boolean(preview[localCharacterBackdropAssets[placement]]);
+}
+
+function LocalCharacterBackdrop({
+  placement,
+  preview,
+}: {
+  placement: LocalCharacterPlacement;
+  preview: LocalCharacterPreview | null;
+}) {
+  const src = preview?.[localCharacterBackdropAssets[placement]];
+  if (!src) return null;
+
+  return (
+    <figure aria-hidden="true" className={`local-character-backdrop local-character-backdrop-${placement}`}>
+      <img
+        alt=""
+        decoding="async"
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.hidden = true;
+        }}
+        src={src}
+      />
+    </figure>
+  );
+}
 
 function parseProjectHash(hash: string) {
   const match = /^#project\/([^/?#]+)$/.exec(hash);
@@ -181,8 +271,10 @@ function useInitialSectionHash(isStandalonePage: boolean) {
     const target = document.getElementById(targetId);
     if (!target) return;
 
-    hasAppliedInitialHash.current = true;
-    const frame = window.requestAnimationFrame(() => target.scrollIntoView({ behavior: "auto", block: "start" }));
+    const frame = window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+      hasAppliedInitialHash.current = true;
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [isStandalonePage]);
 }
@@ -382,7 +474,13 @@ function SystemMap() {
   );
 }
 
-function FeaturedStage({ project }: { project: PortfolioProject }) {
+function FeaturedStage({
+  project,
+  localCharacterPreview,
+}: {
+  project: PortfolioProject;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
   return (
     <m.article
       animate={{ opacity: 1, y: 0 }}
@@ -415,6 +513,7 @@ function FeaturedStage({ project }: { project: PortfolioProject }) {
         </a>
       </div>
       <div className="featured-visual" aria-hidden="true">
+        <LocalCharacterBackdrop placement="featured" preview={localCharacterPreview} />
         <span className="visual-number">{project.sequence}</span>
         <span className="visual-label">FLAGSHIP CASE</span>
         <div className="visual-orbit visual-orbit-a" />
@@ -429,12 +528,49 @@ function FeaturedStage({ project }: { project: PortfolioProject }) {
   );
 }
 
+function CaseStudyMediaGateway({
+  project,
+  localCharacterPreview,
+}: {
+  project: PortfolioProject;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
+  const caseStudy = getCaseStudy(project.id);
+  const mediaCount = caseStudy?.media.length ?? 0;
+
+  if (!caseStudy) return null;
+
+  return (
+    <section
+      className={`case-media-gateway${hasLocalCharacterBackdrop("media", localCharacterPreview) ? " has-local-character-backdrop" : ""}`}
+      aria-labelledby="case-media-gateway-heading"
+    >
+      <LocalCharacterBackdrop placement="media" preview={localCharacterPreview} />
+      <div className="case-media-gateway-copy">
+        <p className="case-media-gateway-kicker"><span className="signal-dot signal-dot-coral" /> CASE STUDY MEDIA</p>
+        <h3 id="case-media-gateway-heading">從公開素材，進入完整案例。</h3>
+        <p>目前焦點是「{project.title}」。先從可公開的媒體切面、系統流程與佐證索引開始，再進入完整 Case Study。</p>
+        <a className="case-media-gateway-action" href={`${projectPath(project.id)}#media-${project.id}`}>
+          開啟 {project.title} 的媒體導覽 <ArrowUpRight size={18} aria-hidden="true" />
+        </a>
+      </div>
+      <dl className="case-media-gateway-meta" aria-label="案例媒體入口摘要">
+        <div><dt>ACTIVE FILE</dt><dd>{project.sequence}</dd></div>
+        <div><dt>PUBLIC VIEWS</dt><dd>{mediaCount.toString().padStart(2, "0")}</dd></div>
+        <div><dt>ENTRY</dt><dd>MEDIA / EVIDENCE</dd></div>
+      </dl>
+    </section>
+  );
+}
+
 function ProjectArchive({
   filter,
   onFilterChange,
+  localCharacterPreview,
 }: {
   filter: ArchiveFilter;
   onFilterChange: (filter: ArchiveFilter) => void;
+  localCharacterPreview: LocalCharacterPreview | null;
 }) {
   const visibleProjects = useMemo(
     () => {
@@ -497,6 +633,12 @@ function ProjectArchive({
         <p className="archive-filter-copy">{activeFilter.eyebrow}</p>
       </div>
 
+      {filter === "creative" && hasLocalCharacterBackdrop("archive", localCharacterPreview) && (
+        <div className="archive-character-stage">
+          <LocalCharacterBackdrop placement="archive" preview={localCharacterPreview} />
+        </div>
+      )}
+
       <m.ul className="archive-grid" aria-label="專案清單" layout transition={{ layout: { duration: 0.34, ease: "easeOut" } }}>
         <AnimatePresence initial={false}>
           {visibleProjects.map((project, index) => (
@@ -540,9 +682,19 @@ function ProjectArchive({
   );
 }
 
-function CaseStudyFlow({ caseStudy }: { caseStudy: CaseStudy }) {
+function CaseStudyFlow({
+  caseStudy,
+  localCharacterPreview,
+}: {
+  caseStudy: CaseStudy;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
   return (
-    <section className="case-study-flow" aria-labelledby={`case-flow-${caseStudy.projectId}`}>
+    <section
+      className={`case-study-flow${hasLocalCharacterBackdrop("flow", localCharacterPreview) ? " has-local-character-backdrop" : ""}`}
+      aria-labelledby={`case-flow-${caseStudy.projectId}`}
+    >
+      <LocalCharacterBackdrop placement="flow" preview={localCharacterPreview} />
       <div className="case-study-section-heading">
           <p>03 / SYSTEM FLOW</p>
         <div>
@@ -617,7 +769,13 @@ function CaseStudyMediaFrame({ media }: { media: CaseStudy["media"][number] }) {
   );
 }
 
-function CaseStudyMediaNavigator({ caseStudy }: { caseStudy: CaseStudy }) {
+function CaseStudyMediaNavigator({
+  caseStudy,
+  localCharacterPreview,
+}: {
+  caseStudy: CaseStudy;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
   const [activeMediaId, setActiveMediaId] = useState(() => caseStudy.media[0]?.id ?? "");
   const [isMediaExpanded, setIsMediaExpanded] = useState(false);
   const mediaDialogRef = useRef<HTMLDivElement>(null);
@@ -653,7 +811,12 @@ function CaseStudyMediaNavigator({ caseStudy }: { caseStudy: CaseStudy }) {
 
   return (
     <>
-      <section id={`media-${caseStudy.projectId}`} className="case-study-media" aria-labelledby={`case-media-${caseStudy.projectId}`}>
+      <section
+        id={`media-${caseStudy.projectId}`}
+        className={`case-study-media${hasLocalCharacterBackdrop("media", localCharacterPreview) ? " has-local-character-backdrop" : ""}`}
+        aria-labelledby={`case-media-${caseStudy.projectId}`}
+      >
+        <LocalCharacterBackdrop placement="media" preview={localCharacterPreview} />
         <div className="case-study-section-heading">
           <p>02 / PUBLIC MEDIA</p>
           <div>
@@ -799,11 +962,21 @@ function CaseStudyMediaNavigator({ caseStudy }: { caseStudy: CaseStudy }) {
   );
 }
 
-function CaseStudyEvidenceIndex({ caseStudy }: { caseStudy: CaseStudy }) {
+function CaseStudyEvidenceIndex({
+  caseStudy,
+  localCharacterPreview,
+}: {
+  caseStudy: CaseStudy;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
   if (!caseStudy.evidence.length && !caseStudy.links.length) return null;
 
   return (
-    <section className="case-study-evidence" aria-labelledby={`case-evidence-${caseStudy.projectId}`}>
+    <section
+      className={`case-study-evidence${hasLocalCharacterBackdrop("evidence", localCharacterPreview) ? " has-local-character-backdrop" : ""}`}
+      aria-labelledby={`case-evidence-${caseStudy.projectId}`}
+    >
+      <LocalCharacterBackdrop placement="evidence" preview={localCharacterPreview} />
       <div className="case-study-section-heading">
         <p>07 / EVIDENCE INDEX</p>
         <div>
@@ -872,7 +1045,15 @@ function CaseStudyEvidenceIndex({ caseStudy }: { caseStudy: CaseStudy }) {
   );
 }
 
-function FlagshipCaseStudy({ caseStudy, project }: { caseStudy: CaseStudy; project: PortfolioProject }) {
+function FlagshipCaseStudy({
+  caseStudy,
+  project,
+  localCharacterPreview,
+}: {
+  caseStudy: CaseStudy;
+  project: PortfolioProject;
+  localCharacterPreview: LocalCharacterPreview | null;
+}) {
   return (
     <section className={`case-study case-study-${project.accent}`} aria-labelledby={`case-heading-${project.id}`}>
       <m.div
@@ -901,9 +1082,9 @@ function FlagshipCaseStudy({ caseStudy, project }: { caseStudy: CaseStudy; proje
         </aside>
       </m.div>
 
-      <CaseStudyMediaNavigator caseStudy={caseStudy} />
+      <CaseStudyMediaNavigator caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
 
-      <CaseStudyFlow caseStudy={caseStudy} />
+      <CaseStudyFlow caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
 
       <section className="case-study-chapters" aria-labelledby={`case-chapters-${caseStudy.projectId}`}>
         <div className="case-study-section-heading">
@@ -979,7 +1160,7 @@ function FlagshipCaseStudy({ caseStudy, project }: { caseStudy: CaseStudy; proje
         </div>
       </section>
 
-      <CaseStudyEvidenceIndex caseStudy={caseStudy} />
+      <CaseStudyEvidenceIndex caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
 
       <section className="case-study-boundaries" aria-labelledby={`case-boundaries-${caseStudy.projectId}`}>
         <div>
@@ -1002,11 +1183,13 @@ function ProjectDetailPage({
   projectIndex,
   previousProject,
   nextProject,
+  localCharacterPreview,
 }: {
   project: PortfolioProject;
   projectIndex: number;
   previousProject?: PortfolioProject;
   nextProject?: PortfolioProject;
+  localCharacterPreview: LocalCharacterPreview | null;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const caseStudy = getCaseStudy(project.id);
@@ -1100,7 +1283,7 @@ function ProjectDetailPage({
           </div>
         </section>
 
-        {caseStudy && <FlagshipCaseStudy caseStudy={caseStudy} project={project} />}
+        {caseStudy && <FlagshipCaseStudy caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} project={project} />}
 
         <nav className="detail-pagination" aria-label="專案前後導覽">
           {previousProject ? (
@@ -1129,7 +1312,7 @@ function ProjectDetailPage({
   );
 }
 
-function ProfilePage() {
+function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCharacterPreview | null }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -1172,6 +1355,7 @@ function ProfilePage() {
 
       <main className="profile-page-main" id="profile-detail" tabIndex={-1}>
         <section className="profile-page-hero">
+          <LocalCharacterPreviewArtwork placement="profile" src={localCharacterPreview?.profile} />
           <div className="profile-page-hero-copy">
             <p className="detail-kicker">PUBLIC PROFESSIONAL SUMMARY</p>
             <h1 ref={headingRef} tabIndex={-1}>蔡旻佑</h1>
@@ -1402,6 +1586,7 @@ function App() {
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
+  const localCharacterPreview = useLocalCharacterPreview();
   useRevealOnScroll(projectRouteId);
   const routedProject = useMemo(
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
@@ -1465,9 +1650,10 @@ function App() {
               previousProject={orderedPortfolioProjects[orderedPortfolioProjects.findIndex((project) => project.id === routedProject.id) - 1]}
               project={routedProject}
               projectIndex={orderedPortfolioProjects.findIndex((project) => project.id === routedProject.id)}
+              localCharacterPreview={localCharacterPreview}
             />
           ) : isProfileRoute ? (
-            <ProfilePage key="profile-page" />
+            <ProfilePage key="profile-page" localCharacterPreview={localCharacterPreview} />
           ) : isEnglishRoute ? (
             <EnglishPage key="english-page" />
           ) : (
@@ -1516,6 +1702,7 @@ function App() {
 
       <main id="top" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-heading">
+          <LocalCharacterPreviewArtwork placement="hero" src={localCharacterPreview?.hero} />
           <div className="hero-copy entry-reveal">
             <p className="eyebrow"><span className="signal-dot" /> PERSONAL SYSTEMS PORTFOLIO / 2026</p>
             <h1 id="hero-heading">蔡旻佑</h1>
@@ -1548,7 +1735,12 @@ function App() {
           </div>
         </section>
 
-        <section id="story" className="story-section" aria-labelledby="story-heading">
+        <section
+          id="story"
+          className={`story-section${hasLocalCharacterBackdrop("flow", localCharacterPreview) ? " has-local-character-backdrop" : ""}`}
+          aria-labelledby="story-heading"
+        >
+          <LocalCharacterBackdrop placement="flow" preview={localCharacterPreview} />
           <div className="story-intro reveal">
             <p className="section-index">01 / SYSTEM NARRATIVE</p>
             <h2 id="story-heading">從現場訊號，<br />到可交接的系統。</h2>
@@ -1597,8 +1789,9 @@ function App() {
             ))}
           </div>
           <AnimatePresence initial={false} mode="wait">
-            <FeaturedStage key={activeProject.id} project={activeProject} />
+            <FeaturedStage key={activeProject.id} localCharacterPreview={localCharacterPreview} project={activeProject} />
           </AnimatePresence>
+          <CaseStudyMediaGateway localCharacterPreview={localCharacterPreview} project={activeProject} />
           <div className="featured-current-work reveal">
             <SystemMap />
           </div>
@@ -1606,6 +1799,7 @@ function App() {
 
         <ProjectArchive
           filter={archiveFilter}
+          localCharacterPreview={localCharacterPreview}
           onFilterChange={setArchiveFilter}
         />
 

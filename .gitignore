@@ -4,6 +4,7 @@ artifacts/
 graphify-out/
 tools/
 docs/superpowers/
+local-preview/
 *.local
 *.tsbuildinfo
 .DS_Store

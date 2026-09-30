@@ -61,6 +61,20 @@ pnpm install
 pnpm dev
 ```
 
+## 本機角色預覽
+
+`local-preview/character.local.json` 是刻意被 Git 忽略的本機設定。開發伺服器才會讀取它；可填入的欄位是 `hero`、`profile`、`nahida`、`vodyanitsa`、`juFufu`、`huTao`。角色資訊不會顯示為網站文案，而是作為半透明的區塊背景主視覺。
+
+- `hero`、`profile`：首頁與 `/profile/` 的本機背景視覺。
+- `nahida`：旗艦案例主視覺與 Case Study 的公開佐證區。
+- `vodyanitsa`：首頁「系統敘事」與 Case Study 的系統流程區。
+- `huTao`：作品庫切換至「創作企畫」時的背景舞台。
+- `juFufu`：首頁的「案例媒體入口」與旗艦 Case Study 的媒體區；它會跟著目前選取的旗艦案例提供明確的媒體導覽入口。
+
+角色不會以名稱卡顯示；若本機設定留白，公開版仍保留原創介面與可用的案例媒體導覽。
+
+正式 `pnpm build` 不會讀取這個檔案，也不會產生本機預覽端點或素材網址。因此，這個機制只能用於已取得本機使用權的測試素材；不能把未授權的第三方角色素材帶到公開 GitHub Pages。
+
 ## 發布前調整
 
 - 在 `src/data/portfolio.ts` 更新最新經歷、專案狀態與公開邊界。

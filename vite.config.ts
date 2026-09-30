@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -247,9 +247,39 @@ function staticProjectPages(): Plugin {
   };
 }
 
+function localCharacterPreviewServer(): Plugin {
+  return {
+    name: "local-character-preview",
+    apply: "serve",
+    configureServer(server) {
+      const configPath = resolve(process.cwd(), "local-preview", "character.local.json");
+
+      server.middlewares.use("/_local-preview/character", (_request, response) => {
+        if (!existsSync(configPath)) {
+          response.statusCode = 204;
+          response.end();
+          return;
+        }
+
+        try {
+          const config = JSON.parse(readFileSync(configPath, "utf8"));
+          response.setHeader("Cache-Control", "no-store");
+          response.setHeader("Content-Type", "application/json; charset=utf-8");
+          response.end(JSON.stringify(config));
+        } catch {
+          response.statusCode = 500;
+          response.setHeader("Cache-Control", "no-store");
+          response.setHeader("Content-Type", "application/json; charset=utf-8");
+          response.end(JSON.stringify({ error: "Local character preview configuration is invalid." }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: "/",
-  plugins: [react(), staticProjectPages()],
+  plugins: [react(), localCharacterPreviewServer(), staticProjectPages()],
   server: {
     watch: {
       ignored: ["**/artifacts/**", "**/graphify-out/**", "**/tools/**"],
