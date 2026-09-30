@@ -60,7 +60,7 @@ type PageRoute =
 const localCharacterAssetKeys = ["hero", "profile", "nahida", "vodyanitsa", "juFufu", "huTao"] as const;
 
 type LocalCharacterAsset = (typeof localCharacterAssetKeys)[number];
-type LocalCharacterPreview = Partial<Record<LocalCharacterAsset, string>>;
+type LocalCharacterPreview = Partial<Record<LocalCharacterAsset, string | null>>;
 type LocalCharacterPlacement = "featured" | "media" | "flow" | "evidence" | "archive";
 
 // The local-only image map intentionally keeps character names out of the rendered UI.
@@ -106,7 +106,7 @@ function isLocalCharacterPreview(value: unknown): value is LocalCharacterPreview
   const preview = value as Record<string, unknown>;
   return localCharacterAssetKeys.some((key) => {
     const asset = preview[key];
-    return typeof asset === "string" && asset.startsWith("https://");
+    return asset === null || (typeof asset === "string" && asset.startsWith("https://"));
   });
 }
 
@@ -134,12 +134,12 @@ function useCharacterPreview() {
   return preview;
 }
 
-function LocalCharacterPreviewArtwork({ placement, src }: { placement: "hero" | "profile"; src?: string }) {
+function LocalCharacterPreviewArtwork({ placement, src }: { placement: "hero" | "profile"; src?: string | null }) {
   if (!src) return null;
 
   return (
     <figure aria-hidden="true" className={`local-character-artwork local-character-artwork-${placement}`}>
-      <img alt="" decoding="async" src={src} />
+      <img alt="" decoding="async" referrerPolicy="no-referrer" src={src} />
     </figure>
   );
 }
@@ -169,6 +169,7 @@ function LocalCharacterBackdrop({
         onError={(event) => {
           event.currentTarget.hidden = true;
         }}
+        referrerPolicy="no-referrer"
         src={src}
       />
     </figure>
