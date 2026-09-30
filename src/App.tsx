@@ -39,6 +39,7 @@ import {
   type ProjectLane,
   type StatusTone,
 } from "./data/portfolio";
+import { publicCharacterArtwork } from "./data/characterArtwork";
 import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
 import { englishCaseSummaries } from "./data/englishPortfolio";
 import { englishPath, profilePath, projectPath, siteConfig } from "./site";
@@ -109,8 +110,8 @@ function isLocalCharacterPreview(value: unknown): value is LocalCharacterPreview
   });
 }
 
-function useLocalCharacterPreview() {
-  const [preview, setPreview] = useState<LocalCharacterPreview | null>(null);
+function useCharacterPreview() {
+  const [preview, setPreview] = useState<LocalCharacterPreview>(() => ({ ...publicCharacterArtwork }));
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -119,11 +120,11 @@ function useLocalCharacterPreview() {
     void fetch("/_local-preview/character", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((candidate: unknown) => {
-        if (isCurrent) setPreview(isLocalCharacterPreview(candidate) ? candidate : null);
+        if (isCurrent && isLocalCharacterPreview(candidate)) {
+          setPreview((current) => ({ ...current, ...candidate }));
+        }
       })
-      .catch(() => {
-        if (isCurrent) setPreview(null);
-      });
+      .catch(() => undefined);
 
     return () => {
       isCurrent = false;
@@ -1586,7 +1587,7 @@ function App() {
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
-  const localCharacterPreview = useLocalCharacterPreview();
+  const localCharacterPreview = useCharacterPreview();
   useRevealOnScroll(projectRouteId);
   const routedProject = useMemo(
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
