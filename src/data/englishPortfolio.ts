@@ -21,14 +21,14 @@ export const englishCaseSummaries: Record<FlagshipProjectId, EnglishCaseSummary>
     category: "BIOMEDICAL UX / CONCEPT PROTOTYPE",
     role: "Team lead: problem framing, interaction flow, and public-facing system narrative",
     summary: "A synthetic interaction prototype that frames how electrical impedance tomography could support swallowing-rehabilitation feedback without representing human measurements or clinical advice.",
-    outcome: "Finalist in the 10th National Biomedical Engineering Creative Competition. The public demo uses synthetic scenarios only.",
+    outcome: "Finalist in the 10th National Biomedical Engineering Creative Competition, with the on-site presentation completed on October 3, 2026. No award is claimed; the public demo uses synthetic scenarios only.",
   },
   "biopulse-soc": {
     title: "BioPulse-SoC",
     category: "FPGA / EDGE AI",
     role: "AXI DMA integration, batch alignment, and on-board verification records within a two-person team",
     summary: "An edge-inference handoff that connects a quantized VAP early-warning candidate, HLS IP, AXI DMA, and a PYNQ-Z1 demonstration environment.",
-    outcome: "AMD Track finalist and A3D3 Track honorable recognition. The public case describes the handoff, not clinical performance or team-private engineering assets.",
+    outcome: "AMD Track finalist, with an A3D3 Track honorable recognition. The AMD Track main award was not received. The public case describes the handoff, not clinical performance or team-private engineering assets.",
   },
   yieldsentry: {
     title: "YieldSentry",

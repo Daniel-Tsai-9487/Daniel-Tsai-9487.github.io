@@ -4,8 +4,9 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { flagshipProjectIds, getCaseStudy } from "./src/data/caseStudies";
 import { englishCaseSummaries } from "./src/data/englishPortfolio";
+import { publicDemoRecords, publicProofRecords } from "./src/data/evidence";
 import { portfolioProjects, type PortfolioProject } from "./src/data/portfolio";
-import { absoluteSiteUrl, englishPath, profilePath, projectPath, siteConfig } from "./src/site";
+import { absoluteSiteUrl, englishPath, evidencePath, profilePath, projectPath, siteConfig } from "./src/site";
 
 function escapeHtmlAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -209,8 +210,44 @@ function renderEnglishPage(sourceHtml: string) {
   return replaceStructuredData(html, structuredData);
 }
 
+function renderEvidencePage(sourceHtml: string) {
+  const canonical = absoluteSiteUrl(evidencePath());
+  const socialImage = absoluteSiteUrl(siteConfig.defaultSocialImage);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: siteConfig.evidenceTitle,
+    description: siteConfig.evidenceDescription,
+    url: canonical,
+    inLanguage: "zh-Hant",
+    author: {
+      "@type": "Person",
+      name: "蔡旻佑",
+      alternateName: "Min-Yu Tsai",
+      url: siteConfig.origin,
+    },
+    numberOfItems: publicProofRecords.length + publicDemoRecords.length,
+  };
+  let html = sourceHtml.replace(/<title>[\s\S]*?<\/title>/, `<title>${siteConfig.evidenceTitle}</title>`);
+
+  html = replaceMeta(html, "name", "description", siteConfig.evidenceDescription);
+  html = replaceCanonical(html, canonical);
+  html = replaceMeta(html, "property", "og:title", siteConfig.evidenceTitle);
+  html = replaceMeta(html, "property", "og:description", siteConfig.evidenceDescription);
+  html = replaceMeta(html, "property", "og:type", "website");
+  html = replaceMeta(html, "property", "og:url", canonical);
+  html = replaceMeta(html, "property", "og:image", socialImage);
+  html = replaceMeta(html, "property", "og:image:alt", "蔡旻佑公開證明與 Demo 索引預覽圖");
+  html = replaceMeta(html, "name", "twitter:card", "summary_large_image");
+  html = replaceMeta(html, "name", "twitter:title", siteConfig.evidenceTitle);
+  html = replaceMeta(html, "name", "twitter:description", siteConfig.evidenceDescription);
+  html = replaceMeta(html, "name", "twitter:image", socialImage);
+  html = replaceMeta(html, "name", "twitter:image:alt", "蔡旻佑公開證明與 Demo 索引預覽圖");
+  return replaceStructuredData(html, structuredData);
+}
+
 function createSitemap() {
-  const urls = ["/", profilePath(), englishPath(), ...portfolioProjects.map((project) => projectPath(project.id))];
+  const urls = ["/", profilePath(), evidencePath(), englishPath(), ...portfolioProjects.map((project) => projectPath(project.id))];
   const entries = urls.map((path) => `  <url><loc>${absoluteSiteUrl(path)}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
 }
@@ -233,6 +270,10 @@ function staticProjectPages(): Plugin {
       const englishOutputPath = resolve(outDir, englishPath().replace(/^\//, ""), "index.html");
       mkdirSync(dirname(englishOutputPath), { recursive: true });
       writeFileSync(englishOutputPath, renderEnglishPage(homeHtml), "utf8");
+
+      const evidenceOutputPath = resolve(outDir, evidencePath().replace(/^\//, ""), "index.html");
+      mkdirSync(dirname(evidenceOutputPath), { recursive: true });
+      writeFileSync(evidenceOutputPath, renderEvidencePage(homeHtml), "utf8");
 
       for (const project of portfolioProjects) {
         const outputPath = resolve(outDir, projectPath(project.id).replace(/^\//, ""), "index.html");

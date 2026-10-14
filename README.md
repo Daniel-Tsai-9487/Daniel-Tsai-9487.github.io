@@ -1,12 +1,13 @@
 # 個人網站架設
 
-這是一個以 React、Vite 與原創系統地圖介面製作的個人作品集。它以高對比、章節化、滾動揭露的視覺節奏呈現作品，但沒有使用《絕區零》或其他參考網站的角色、商標、圖片與原始設計資產。
+這是一個以 React、Vite 與原創系統地圖介面製作的個人作品集。它以高對比、章節化、滾動揭露的視覺節奏呈現作品；介面、排版與內容結構為本站實作，角色背景圖則依使用者指定作為裝飾素材，本站不主張其角色或圖片權利。
 
 ## 內容架構
 
-- `src/data/portfolio.ts`：34 個可公開列示的專案、研究、原型、企畫、課程實作與原創寫作企畫，以及各自的公開邊界。
+- `src/data/portfolio.ts`：38 個可公開列示的專案、研究、原型、企畫、課程實作與原創寫作企畫，以及各自的公開邊界。
 - `src/data/caseStudies.ts`：6 件旗艦案例的問題框架、本人貢獻、系統流程、案例敘事、里程碑、成果，以及可管理的 `media`、`evidence`、`links` 與 `publicScope`。
-- `src/App.tsx`：即時專案狀態地圖、代表成果、可篩選的完整檔案庫、34 個可分享的專案詳情頁、經歷、能力與合作入口。
+- `src/data/evidence.ts`：獎狀、完賽／決賽紀錄、課程證書、公開 Demo 與受限原件的集中索引；每筆都分開列出可證明與不可延伸的主張。
+- `src/App.tsx`：即時專案狀態地圖、代表成果、可篩選的完整檔案庫、38 個可分享的專案詳情頁、`/evidence/` 證明頁、經歷、能力與合作入口。
 - `src/styles.css`：進場、捲動揭露、章節字幕、專案頁轉場與 reduced-motion 支援。
 
 ## 專案詳情網址
@@ -39,6 +40,16 @@ https://daniel-tsai-9487.github.io/projects/<project-id>/
 - `links`：公開資源與明確標示的受限資源；只有提供 `href` 的項目才會變成可點擊外連。
 - `publicScope`：案例摘要與不公開、不可宣稱的範圍，避免公開層和原始資料邊界混淆。
 
+## 公開證明與 Demo 索引
+
+`/evidence/` 把可公開證明、公開 Demo 與已核對但不能公開原件的紀錄分成三區：
+
+- `PUBLIC PROOF`：本人獎狀、參與／完賽證書、決賽現場紀錄與可安全公開的團隊獎項圖。
+- `PUBLIC DEMO`：合成資料、proxy data、工程視圖、公開 repository、影片與可直接開啟的 Demo 網站。
+- `RESTRICTED RECORD`：原件含隊友姓名、主辦寄件者資料、合作資訊或公開授權不明時，只列已核對狀態與限制。
+
+證明頁不把「平台收件」寫成「入圍／得獎」，也不把「公開畫面」寫成 E2E、真實部署、人體或臨床驗證。
+
 公開個人頁面已放入合作入口：GitHub [Daniel-Tsai-9487](https://github.com/Daniel-Tsai-9487)、Facebook [daniel.tsai.628090](https://www.facebook.com/daniel.tsai.628090/)、Instagram [daniel_tsai_0.0](https://www.instagram.com/daniel_tsai_0.0/)。
 
 ## screenshot-to-code 狀態
@@ -63,17 +74,9 @@ pnpm dev
 
 ## 角色背景素材
 
-`src/data/characterArtwork.ts` 是公開部署使用的角色 CDN 設定，並會同時套用在 production 與本機預覽。角色資訊不會顯示為網站文案，而是作為半透明的區塊背景主視覺。
+公開 production 會從 `src/data/characterArtwork.ts` 載入使用者指定的角色背景圖片網址；它們只作為半透明裝飾，不作為本站作品或原創資產主張。外部來源若失效，對應圖片會隱藏，網站文字與導覽仍可使用。
 
-- `hero`、`profile`：首頁與 `/profile/` 的背景視覺。
-- `nahida`：旗艦案例主視覺與 Case Study 的公開佐證區。
-- `vodyanitsa`：首頁「系統敘事」與 Case Study 的系統流程區。
-- `huTao`：作品庫切換至「創作企畫」時的背景舞台。
-- `juFufu`：首頁的「案例媒體入口」與旗艦 Case Study 的媒體區；它會跟著目前選取的旗艦案例提供明確的媒體導覽入口。
-
-`local-preview/character.local.json` 仍被 Git 忽略，僅用於開發時覆蓋同名 CDN 來源，例如替換構圖、測試新圖片；將某欄設為 `null` 可暫時停用該張素材。
-
-正式 `pnpm build` 會將公開角色 CDN 設定編入網站程式；本機覆蓋檔與本機預覽端點仍不會被部署。外部角色圖片會直接向其 CDN 請求，圖片請求已設定不傳送來源頁資訊。
+`local-preview/character.local.json` 仍被 Git 忽略，可在開發模式透過本機預覽端點覆寫 production 基準以測試構圖；它本身不會進入 build 或公開部署。
 
 ## 發布前調整
 
@@ -84,4 +87,4 @@ pnpm dev
 
 ## 公開部署與自訂網域
 
-網站會在建置時為 34 件專案產生獨立靜態頁面、頁級標題、描述、canonical、Open Graph 與 JSON-LD，並輸出 `sitemap.xml`。正式公開網址先使用 `https://daniel-tsai-9487.github.io/`；等取得有效 FQDN 後，只需更新 `src/site.ts` 的 `origin` 與新增 `public/CNAME`。
+網站會在建置時為首頁、公開概要、證明索引、英文精選與 38 件專案產生獨立靜態頁面、頁級標題、描述、canonical、Open Graph 與 JSON-LD，並輸出 `sitemap.xml`。目前公開網址為 `https://daniel-tsai-9487.github.io/`；等取得有效 FQDN 後，只需更新 `src/site.ts` 的 `origin` 與新增 `public/CNAME`。

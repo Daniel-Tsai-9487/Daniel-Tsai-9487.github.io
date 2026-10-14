@@ -5,6 +5,8 @@ export const siteConfig = {
   defaultSocialImage: "/social/portfolio.png",
   profileTitle: "蔡旻佑 | 公開專業概要",
   profileDescription: "蔡旻佑的公開專業概要：聚焦生醫 AI、邊緣運算、智慧工作流與跨領域系統整合。",
+  evidenceTitle: "公開證明與 Demo 索引 | 蔡旻佑",
+  evidenceDescription: "蔡旻佑作品集的公開證明與 Demo 索引：分開呈現獎項、參與／決賽紀錄、課程證書、公開原型與受限證據邊界。",
   englishSiteName: "Min-Yu Tsai | Systems Portfolio",
   englishTitle: "Min-Yu Tsai | Selected Systems Portfolio",
   englishDescription: "Six selected case studies by Min-Yu Tsai across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education.",
@@ -20,6 +22,10 @@ export function profilePath() {
 
 export function englishPath() {
   return "/en/";
+}
+
+export function evidencePath() {
+  return "/evidence/";
 }
 
 export function absoluteSiteUrl(path = "/") {

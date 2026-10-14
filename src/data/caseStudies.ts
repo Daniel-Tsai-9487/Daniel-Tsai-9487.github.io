@@ -38,6 +38,7 @@ export type CaseStudyMediaKind = "signal" | "workflow" | "record";
 export type CaseStudyMediaStatus =
   | "PUBLIC SYNTHETIC DEMO"
   | "PUBLIC ENGINEERING VISUAL"
+  | "PUBLIC PROJECT ARTIFACT"
   | "PUBLIC RESEARCH PROTOTYPE"
   | "PUBLIC SYNTHESIS"
   | "RECORD ONLY";
@@ -51,7 +52,7 @@ type CaseStudyMediaBase = {
 };
 
 type CaseStudyMediaWithSource = CaseStudyMediaBase & {
-  status: "PUBLIC SYNTHETIC DEMO" | "PUBLIC ENGINEERING VISUAL" | "PUBLIC RESEARCH PROTOTYPE";
+  status: "PUBLIC SYNTHETIC DEMO" | "PUBLIC ENGINEERING VISUAL" | "PUBLIC PROJECT ARTIFACT" | "PUBLIC RESEARCH PROTOTYPE";
   src: string;
   alt: string;
   provenance: string;
@@ -70,12 +71,35 @@ export function hasPublicMediaAsset(media: CaseStudyMedia): media is CaseStudyMe
   return media.src !== undefined;
 }
 
-export type CaseStudyEvidence = {
+export type CaseStudyEvidenceKind =
+  | "OFFICIAL EVENT"
+  | "OFFICIAL RESULT"
+  | "AWARD RECORD"
+  | "PROJECT ARTIFACT"
+  | "ROLE OR TEAM RECORD"
+  | "PROJECT STATUS"
+  | "PUBLIC SCOPE";
+
+type CaseStudyEvidenceBase = {
   label: string;
   value: string;
   detail: string;
   source: string;
+  kind: CaseStudyEvidenceKind;
+  asOf?: string;
 };
+
+export type CaseStudyPublicEvidence = CaseStudyEvidenceBase & {
+  availability: "PUBLIC";
+  href?: string;
+};
+
+export type CaseStudyRestrictedEvidence = CaseStudyEvidenceBase & {
+  availability: "RESTRICTED";
+  href?: never;
+};
+
+export type CaseStudyEvidence = CaseStudyPublicEvidence | CaseStudyRestrictedEvidence;
 
 type CaseStudyLinkBase = {
   label: string;
@@ -165,12 +189,12 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
     media: [
       { id: "risk-window", label: "01 / RESEARCH FRAME", title: "Time-window research map", caption: "以公開研究原型說明時間窗、患者層級與研究流程的關係；所有欄位與狀態均為方法敘事，不載入受控資料或個案畫面。", kind: "signal", status: "PUBLIC RESEARCH PROTOTYPE", src: "/case-media/vap-early-warning-prototype-dashboard.png", alt: "VAP 早期預警研究的公開方法原型，顯示研究問題、時間窗、患者層級評估與公開邊界。", provenance: "為公開作品集製作的原創研究視覺。所有流程、欄位與狀態均為方法敘事；不含受控資料、個案、效能數字、研究圖表、臨床建議或第三方資料。" },
       { id: "evaluation", label: "02 / EVALUATION", title: "Patient-level guardrail", caption: "把資料切分、校準與解釋放進同一個公開方法框架，讓模型比較的限制可被讀到。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
-      { id: "conference-record", label: "03 / RECORD", title: "Conference status record", caption: "保留 ICBEI 2026 摘要接受與待發表的狀態，不以未公開圖表替代正式研究材料。", kind: "record", status: "RECORD ONLY" },
+      { id: "conference-record", label: "03 / RECORD", title: "Conference status record", caption: "保留 ICBEI 2026 摘要接受、註冊與待發表的狀態，不以未公開圖表替代正式研究材料。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "CONFERENCE", value: "ABSTRACT ACCEPTED", detail: "ICBEI 2026 摘要接受；正式發表與公開範圍仍依會議流程處理。", source: "CONFERENCE RECORD / RESTRICTED" },
-      { label: "MANUSCRIPT", value: "WA2611", detail: "稿號 WA2611 已完成註冊，主辦方安排現場海報發表。", source: "REGISTRATION RECORD / RESTRICTED" },
-      { label: "ROLE", value: "FIRST AUTHOR", detail: "負責資料處理、候選模型比較與結果、摘要資料整理。", source: "CONFERENCE AUTHOR RECORD / RESTRICTED" },
+      { label: "CONFERENCE", value: "ABSTRACT ACCEPTED", detail: "ICBEI 2026 摘要接受；正式發表與公開範圍仍依會議流程處理。", source: "CONFERENCE RECORD", kind: "OFFICIAL RESULT", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "MANUSCRIPT", value: "WA2611", detail: "稿號 WA2611 已完成註冊，主辦方安排現場海報發表。", source: "REGISTRATION RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "ROLE", value: "FIRST AUTHOR", detail: "負責資料處理、候選模型比較與結果、摘要資料整理。", source: "CONFERENCE AUTHOR RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
     ],
     links: [
       { label: "CONFERENCE SITE", title: "ICBEI 2026", detail: "主辦方公開會議頁；不等於個別稿件的發表完成、期刊接受或公開授權。", availability: "PUBLIC", href: "https://imeti.org/ICBEI2026/" },
@@ -223,26 +247,28 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
     milestones: [
       { stage: "CONCEPT", title: "從感測技術回到回饋內容", copy: "以居家復健中可理解、可遠距討論的資訊層次為概念中心。" },
       { stage: "INTERACTION", title: "建立合成資料展示", copy: "先用合成情境驗證畫面與流程，而不把原型假裝為真實儀器輸出。" },
-      { stage: "COMPETITION", title: "進入全國醫學工程創意競賽決賽", copy: "保留決賽狀態，不提前宣稱後續結果或人體研究進度。" },
+      { stage: "COMPETITION", title: "完成全國醫學工程創意競賽決賽展示", copy: "2026-10-03 完成現場展示；目前不主張獎項、硬體或人體研究成果。" },
     ],
     outcomes: [
-      { label: "STATUS", value: "FINALIST", copy: "第十屆全國醫學工程創意競賽入圍決賽。" },
+      { label: "STATUS", value: "FINALIST / ON-SITE", copy: "第十屆全國醫學工程創意競賽入圍決賽，並於 2026-10-03 完成現場展示。" },
       { label: "PROTOTYPE", value: "SYNTHETIC DEMO", copy: "用合成資料將資訊回饋流程具體化，作為後續技術驗證前的使用情境材料。" },
       { label: "ROLE", value: "TEAM LEAD", copy: "主導問題框架、系統敘事與公開表述，並與兩人團隊協作推進。" },
     ],
     media: [
       { id: "synthetic-flow", label: "01 / SYNTHETIC FLOW", title: "Synthetic EIT interaction", caption: "以合成資料展示未來可能的區域回饋流程，讓技術假設與使用情境可以先被討論。", kind: "workflow", status: "PUBLIC SYNTHETIC DEMO", src: "/case-media/swallow-eit-synthetic-prototype.png", alt: "嚥域專案的合成 EIT 居家吞嚥回饋原型畫面。", provenance: "為公開作品集擷取的原創合成情境展示；不公開競賽交付檔，且沒有人體資料、硬體量測、臨床輸出或治療建議。" },
-      { id: "rehab-context", label: "02 / CONTEXT", title: "Rehabilitation feedback frame", caption: "以居家吞嚥復健的回饋節點組成公開情境視圖，不將其表示為臨床或人體資料。", kind: "signal", status: "PUBLIC SYNTHESIS" },
-      { id: "finalist-record", label: "03 / RECORD", title: "Finalist status record", caption: "保留競賽入圍決賽的事實狀態，不放入尚未取得公開授權的競賽素材。", kind: "record", status: "RECORD ONLY" },
+      { id: "open-data-qc", label: "02 / PUBLIC ARTIFACT", title: "Open-data EIT quality check", caption: "以專案公開輸出呈現 EIT 訊號品質檢查的工作切面；它不是嚥域的硬體量測或人體資料。", kind: "signal", status: "PUBLIC PROJECT ARTIFACT", src: "/case-media/swallow-eit-open-data-qc.png", alt: "嚥域相關 EIT 公開資料的訊號品質檢查圖，呈現可用於研究原型的資料品質工作。", provenance: "來源為專案公開輸出圖；僅呈現公開資料的品質檢查工作，不含人體、臨床、硬體量測或治療建議。" },
+      { id: "rehab-context", label: "03 / CONTEXT", title: "Rehabilitation feedback frame", caption: "以居家吞嚥復健的回饋節點組成公開情境視圖，不將其表示為臨床或人體資料。", kind: "signal", status: "PUBLIC SYNTHESIS" },
+      { id: "finalist-record", label: "04 / ON-SITE RECORD", title: "Finalist on-site record", caption: "現場照片只證明本人與作品完成決賽現場展示，不代表獲獎、硬體完成或臨床驗證。", kind: "record", status: "PUBLIC PROJECT ARTIFACT", src: "/evidence/swallow-eit-finals-onsite.jpg", alt: "嚥域專案在第十屆全國醫學工程創意競賽決賽現場的展示紀錄。", provenance: "2026-10-03 決賽現場照片；畫面僅含本人及競賽識別，未用於宣稱獎項或技術驗證。" },
     ],
     evidence: [
-      { label: "COMPETITION", value: "FINALIST", detail: "第十屆全國醫學工程創意競賽大專組入圍決賽。", source: "OFFICIAL FINALIST NOTICE" },
-      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本人擔任隊長，主導問題框架、回饋流程與公開敘事。", source: "COMPETITION TEAM RECORD" },
-      { label: "PROTOTYPE", value: "SYNTHETIC DEMO", detail: "以合成資料檢視資訊層次與互動情境，不主張真實量測結果。", source: "PUBLIC SYNTHESIS" },
+      { label: "OFFICIAL EVENT", value: "2026 COMPETITION", detail: "主辦單位公開的競賽資訊入口；它不取代個案入圍公告或決賽交付素材。", source: "TAIPEI MEDICAL UNIVERSITY / EVENT PAGE", kind: "OFFICIAL EVENT", availability: "PUBLIC", href: "https://sbme.tmu.edu.tw/front/Events1/competition/2026sbme/pages.php?ID=77346b1d82056289f7496abbfe13dd63281f2ad3c3fb62468fd4fe50355dbf62", asOf: "2026-10" },
+      { label: "ON-SITE FINAL", value: "2026-10-03", detail: "現場照片證明本人與嚥域完成決賽現場展示；目前沒有查到得獎結果。", source: "ON-SITE PHOTO RECORD", kind: "PROJECT STATUS", availability: "PUBLIC", href: "/evidence/swallow-eit-finals-onsite.jpg", asOf: "2026-10" },
+      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本人擔任隊長，主導問題框架、回饋流程與公開敘事。", source: "COMPETITION TEAM RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "OPEN DATA QC", value: "PUBLIC ARTIFACT", detail: "公開 EIT 資料品質檢查圖只用於呈現研究工作切面，不主張真實量測或臨床結果。", source: "PUBLIC PROJECT ARTIFACT", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/swallow-eit-open-data-qc.png", asOf: "2026-10" },
     ],
     links: [
       { label: "OFFICIAL EVENT", title: "第十屆全國醫學工程創意競賽", detail: "臺北醫學大學生物醫學工程學系公開競賽頁；不含未取得授權的決賽交付素材。", availability: "PUBLIC", href: "https://sbme.tmu.edu.tw/front/Events1/competition/2026sbme/pages.php?ID=77346b1d82056289f7496abbfe13dd63281f2ad3c3fb62468fd4fe50355dbf62" },
-      { label: "COMPETITION MATERIAL", title: "決賽素材尚未公開", detail: "簡報、競賽附件與後續成果只會在取得授權後新增。", availability: "RESTRICTED" },
+      { label: "COMPETITION MATERIAL", title: "決賽交付素材不公開", detail: "網站只使用本人現場照；簡報、附件與團隊素材仍維持受限。", availability: "RESTRICTED" },
       { label: "DEMO ACCESS", title: "情境原型記錄", detail: "目前網站僅呈現合成資料與方法敘事，不提供醫療或硬體 demo 連結。", availability: "RESTRICTED" },
     ],
     publicScope: {
@@ -291,24 +317,27 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
     milestones: [
       { stage: "MODEL HANDOFF", title: "收斂可部署的量化候選", copy: "把研究任務、模型縮減與轉換流程整理成可進入 HLS 的系統路徑。" },
       { stage: "BOARD INTEGRATION", title: "串接 PYNQ-Z1 與 AXI DMA", copy: "處理 DMA、批次補齊與板端輸入輸出，使展示鏈路可被重複執行。" },
-      { stage: "COMPETITION RECORD", title: "競賽展示與成果紀錄", copy: "保留 AMD Track 入圍決賽與 A3D3 Track 優選獎的狀態，不擴寫成產品部署。" },
+      { stage: "COMPETITION RECORD", title: "競賽展示與成果紀錄", copy: "保留 AMD Track 入圍決賽與 A3D3 Track 優選獎兩項獨立成果，不將其擴寫成產品部署。" },
     ],
     outcomes: [
-      { label: "AWARD", value: "A3D3 TRACK", copy: "獲優選獎，成果聚焦於 hls4ml 轉換、整合與板端展示。" },
-      { label: "SHOWCASE", value: "AMD FINALIST", copy: "AMD Track 入圍決賽；以實機 FPGA 展示作為競賽主線。" },
+      { label: "RECOGNITION", value: "A3D3 TRACK AWARD", copy: "獲 A3D3 Track 優選獎；此獎項與 AMD Track 主獎分開判定。" },
+      { label: "SHOWCASE", value: "AMD FINALIST", copy: "AMD Track 入圍決賽並完成現場展示；AMD Track 主獎最終未得獎。" },
       { label: "SYSTEM", value: "PYNQ-Z1", copy: "建立量化模型、HLS IP、AXI DMA 與目標板卡之間的可追蹤交接流程。" },
     ],
     media: [
       { id: "edge-handoff", label: "01 / HANDOFF", title: "Model-to-board handoff", caption: "以公開工程視覺呈現量化模型、HLS IP 與目標板卡之間的交接，不呈現私有工程檔。", kind: "workflow", status: "PUBLIC ENGINEERING VISUAL", src: "/case-media/biopulse-public-engineering-demo.png", alt: "BioPulse-SoC 的公開工程視覺，顯示量化模型、HLS IP、AXI DMA 與 PYNQ-Z1 的交接流程。", provenance: "為公開作品集製作的原創工程版面；不含團隊 HLS、RTL、bitstream、板卡遙測或效能量測。" },
       { id: "dma-path", label: "02 / DATA PATH", title: "AXI DMA transfer path", caption: "聚焦本人負責的 DMA、批次補齊與驗證紀錄，讓資料搬運成為可讀的系統層。", kind: "signal", status: "PUBLIC SYNTHESIS" },
-      { id: "competition-record", label: "03 / RECORD", title: "FPGA competition record", caption: "保留 AMD Track 決賽入圍與 A3D3 Track 優選獎的公開狀態，未加入團隊工程資產。", kind: "record", status: "RECORD ONLY" },
+      { id: "competition-record", label: "03 / RECORD", title: "FPGA competition record", caption: "保留 AMD Track 入圍決賽及 A3D3 Track 優選獎的獨立成果，不加入團隊工程資產或未取得授權的素材。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "AWARD", value: "A3D3 TRACK", detail: "FPGA 智慧運算與終端節點創意應用競賽 A3D3 Track 優選獎。", source: "AWARD RECORD / RESTRICTED" },
-      { label: "SHOWCASE", value: "AMD FINALIST", detail: "AMD Track 入圍決賽，展示量化模型與板端推論鏈路。", source: "OFFICIAL FINALIST RECORD" },
-      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本案例只列本人負責的 DMA、批次補齊與板端驗證紀錄。", source: "TEAM CONTRIBUTION RECORD" },
+      { label: "RECOGNITION", value: "A3D3 TRACK AWARD", detail: "2026 FPGA 智慧運算與終端節點創意應用競賽 A3D3 Track 優選獎；此成果不等同 AMD Track 主獎。", source: "ORGANIZER NOTIFICATION RECORD", kind: "AWARD RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "SHOWCASE", value: "AMD FINALIST", detail: "AMD Track 入圍決賽，並於 2026-09-05 完成現場展示；AMD Track 主獎最終未得獎。", source: "PROJECT CLOSEOUT RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本案例只列本人負責的 DMA、批次補齊與板端驗證紀錄。", source: "TEAM CONTRIBUTION RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "SYSTEM VISUAL", value: "PUBLIC ARTIFACT", detail: "公開工程視覺呈現量化模型、HLS IP、AXI DMA 與 PYNQ-Z1 的交接關係，不含團隊工程檔、bitstream 或臨床資料。", source: "PUBLIC ENGINEERING VISUAL", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/biopulse-public-engineering-demo.png", asOf: "2026-10" },
     ],
     links: [
+      { label: "TECHNICAL REFERENCE", title: "hls4ml documentation", detail: "公開量化模型轉 HLS 框架文件；提供技術脈絡，不是本案公開原始碼或成效佐證。", availability: "PUBLIC", href: "https://fastmachinelearning.org/hls4ml/" },
+      { label: "TECHNICAL PLATFORM", title: "PYNQ", detail: "AMD adaptive-computing 的公開 PYNQ 平台資料；只對應目標板卡開發脈絡。", availability: "PUBLIC", href: "https://www.pynq.io/" },
       { label: "TECHNICAL MATERIAL", title: "工程資產受限", detail: "HLS、RTL、bitstream、工程設定與團隊檔案不列為公開下載。", availability: "RESTRICTED" },
       { label: "SHOWCASE RECORD", title: "公開成果待授權素材", detail: "可公開展示紀錄會在確認團隊與主辦授權後加入。", availability: "RESTRICTED" },
     ],
@@ -371,11 +400,14 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { id: "competition-record", label: "03 / RECORD", title: "Competition record", caption: "保留競賽佳作與系統展示的可公開事實，不上傳私有原始碼或競賽資料包。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "AWARD", value: "HONORABLE MENTION", detail: "元智大學欣銓半導體書院 AI Agent 實作競賽佳作。", source: "COMPETITION CLOSEOUT RECORD" },
-      { label: "WORKFLOW", value: "4 TASK LINES", detail: "晶圓圖缺陷、測試誘發缺陷、製程感測異常與 8D 報告／知識庫任務分流。", source: "SYSTEM DESIGN RECORD" },
-      { label: "TRACE", value: "4-STEP TRACE", detail: "每次處理保留 route、dispatch、tool、validate 四步 trace，並把不確定結果交由人工審查。", source: "TRACE CONTRACT / RESTRICTED" },
+      { label: "AWARD", value: "HONORABLE MENTION", detail: "元智大學欣銓半導體書院 AI Agent 實作競賽佳作。", source: "COMPETITION CLOSEOUT RECORD", kind: "AWARD RECORD", availability: "RESTRICTED", asOf: "2026-09" },
+      { label: "WORKFLOW", value: "4 TASK LINES", detail: "晶圓圖缺陷、測試誘發缺陷、製程感測異常與 8D 報告／知識庫任務分流。", source: "SYSTEM DESIGN RECORD", kind: "PROJECT ARTIFACT", availability: "RESTRICTED", asOf: "2026-09" },
+      { label: "TRACE", value: "4-STEP TRACE", detail: "每次處理保留 route、dispatch、tool、validate 四步 trace，並把不確定結果交由人工審查。", source: "TRACE CONTRACT", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-09" },
+      { label: "SYSTEM VISUAL", value: "PUBLIC ARTIFACT", detail: "公開工程視覺呈現四條任務線、trace 與人工審核閘門；所有資料與狀態均為合成示例。", source: "PUBLIC ENGINEERING VISUAL", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/yieldsentry-public-engineering-visual.png", asOf: "2026-09" },
     ],
     links: [
+      { label: "OPEN DATA", title: "WM-811K Wafer Map", detail: "公開資料來源，僅用於說明原型的可重現研究脈絡，不代表產線資料或 production 校正。", availability: "PUBLIC", href: "https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map/data" },
+      { label: "OPEN DATA", title: "UCI SECOM", detail: "公開製程感測資料來源，僅用於研究與原型驗證，不代表合作方或產線資料。", availability: "PUBLIC", href: "https://archive.ics.uci.edu/dataset/179/secom" },
       { label: "SOURCE ACCESS", title: "案例原始碼仍為私有", detail: "不公開產線資料、原始碼、機密設定或競賽提交包。", availability: "RESTRICTED" },
       { label: "COMPETITION RECORD", title: "競賽成果佐證受限", detail: "公開頁保留佳作與系統範圍；主辦成果頁或團隊授權素材確認後才會新增外部連結。", availability: "RESTRICTED" },
     ],
@@ -438,9 +470,9 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { id: "internship-record", label: "03 / RECORD", title: "Internship showcase record", caption: "保留 AI UNIVERSITY 產學實習成果發表銅獎的公開成果，不呈現合作方系統或資料。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "RECOGNITION", value: "BRONZE AWARD", detail: "AI UNIVERSITY 產學實習成果發表銅獎。", source: "AWARD RECORD / RESTRICTED" },
-      { label: "TEAM", value: "4 MEMBERS", detail: "四人團隊完成成果展示；本人負責 URS、抽取、媒合與報價核心。", source: "SHOWCASE TEAM RECORD" },
-      { label: "FLOW", value: "DOCUMENT TO QUOTE", detail: "將文件理解、需求媒合與報價流程組成可追蹤的產品骨架。", source: "PUBLIC-SAFE PROCESS SYNTHESIS" },
+      { label: "RECOGNITION", value: "BRONZE AWARD", detail: "AI UNIVERSITY 產學實習成果發表團隊銅獎；證書圖本身不列個人姓名，需與角色紀錄一併閱讀。", source: "TEAM AWARD CERTIFICATE", kind: "AWARD RECORD", availability: "PUBLIC", href: "/evidence/ai-university-bronze.jpg", asOf: "2026-10" },
+      { label: "TEAM", value: "4 MEMBERS", detail: "四人團隊完成成果展示；本人負責 URS、抽取、媒合與報價核心。", source: "SHOWCASE TEAM RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "FLOW", value: "DOCUMENT TO QUOTE", detail: "公開合成展示用來說明文件理解、需求媒合與人工核對的產品骨架，不是企業系統或真實報價證明。", source: "PUBLIC SYNTHETIC DEMO", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/erp-ai-quote-public-demo.png", asOf: "2026-10" },
     ],
     links: [
       { label: "CASE MATERIAL", title: "企業素材受限", detail: "客戶文件、URS、牌價、庫存與正式 ERP 內容不對外公開。", availability: "RESTRICTED" },
@@ -505,11 +537,14 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { id: "prototype-record", label: "03 / RECORD", title: "Independent prototype record", caption: "保留以競賽規格自主開發、但未完成投稿的事實狀態。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "PRODUCT", value: "6 MODULES", detail: "將市場情境、模擬交易、風控與金融教育整合為研究型產品原型。", source: "LOCAL PRODUCT BASELINE / RESTRICTED" },
-      { label: "POSITION", value: "RISK EDUCATION", detail: "以延遲資料、情境回放與風險提示說明研究方法，不提供個別化買賣建議或真實下單。", source: "PUBLIC PRODUCT BOUNDARY" },
-      { label: "DELIVERY", value: "INDEPENDENT PROTOTYPE", detail: "依競賽規格自主完成，但未完成投稿；不將原型當作競賽參賽、入圍或獲獎紀錄。", source: "PROJECT STATUS RECORD / RESTRICTED" },
+      { label: "PRODUCT", value: "6 MODULES", detail: "將市場情境、模擬交易、風控與金融教育整合為研究型產品原型。", source: "LOCAL PRODUCT BASELINE", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-09" },
+      { label: "POSITION", value: "RISK EDUCATION", detail: "以延遲資料、情境回放與風險提示說明研究方法，不提供個別化買賣建議或真實下單。", source: "PUBLIC PORTFOLIO POLICY", kind: "PUBLIC SCOPE", availability: "PUBLIC", asOf: "2026-09" },
+      { label: "DELIVERY", value: "INDEPENDENT PROTOTYPE", detail: "依競賽規格自主完成，但未完成投稿；不將原型當作競賽參賽、入圍或獲獎紀錄。", source: "PROJECT STATUS RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-09" },
+      { label: "SANDBOX", value: "PUBLIC ARTIFACT", detail: "公開合成沙盒視覺說明延遲資料、情境回放與風險教育定位，不含真實帳戶、券商連線或投資建議。", source: "PUBLIC SYNTHETIC DEMO", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/tradepilot-public-sandbox-demo.png", asOf: "2026-09" },
     ],
     links: [
+      { label: "PUBLIC MARKET DATA", title: "TWSE 每日收盤行情", detail: "臺灣證券交易所公開市場資料頁；用於資料來源脈絡，不代表即時報價、投資建議或競賽投稿。", availability: "PUBLIC", href: "https://www.twse.com.tw/zh/trading/historical/mi-index.html" },
+      { label: "PUBLIC FUTURES DATA", title: "TAIFEX 期貨每日交易行情", detail: "臺灣期貨交易所公開盤後行情；只用於研究與風險教育脈絡，不連到交易或個人帳戶。", availability: "PUBLIC", href: "https://www.taifex.com.tw/cht/3/futDailyMarketReport" },
       { label: "PRODUCT ACCESS", title: "完整系統素材受限", detail: "不公開原始金融資料、資料庫、環境設定、私有 repository 或真實交易功能。", availability: "RESTRICTED" },
       { label: "DEMO STATUS", title: "公開 Demo 暫不列出", detail: "在可確認長期可用且不含受限資料前，網站只提供公開合成展示與案例說明。", availability: "RESTRICTED" },
     ],

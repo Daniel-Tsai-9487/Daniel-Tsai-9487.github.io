@@ -42,7 +42,13 @@ import {
 import { publicCharacterArtwork } from "./data/characterArtwork";
 import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
 import { englishCaseSummaries } from "./data/englishPortfolio";
-import { englishPath, profilePath, projectPath, siteConfig } from "./site";
+import {
+  publicDemoRecords,
+  publicProofRecords,
+  restrictedEvidenceRecords,
+  type EvidenceRecord,
+} from "./data/evidence";
+import { englishPath, evidencePath, profilePath, projectPath, siteConfig } from "./site";
 
 type ArchiveFilter = ProjectLane | "all" | "case-study" | "award" | "coursework";
 
@@ -54,6 +60,7 @@ type StatusPillProps = {
 type PageRoute =
   | { kind: "home" }
   | { kind: "profile" }
+  | { kind: "evidence" }
   | { kind: "english" }
   | { kind: "project"; projectId: string };
 
@@ -206,11 +213,16 @@ function isEnglishPath(pathname: string) {
   return /^\/en(?:\/|\/index\.html)?$/.test(pathname);
 }
 
+function isEvidencePath(pathname: string) {
+  return /^\/evidence(?:\/|\/index\.html)?$/.test(pathname);
+}
+
 function usePageRoute() {
   const readPageRoute = (): PageRoute => {
     const pathProjectId = parseProjectPath(window.location.pathname);
     if (pathProjectId) return { kind: "project", projectId: pathProjectId };
     if (isProfilePath(window.location.pathname)) return { kind: "profile" };
+    if (isEvidencePath(window.location.pathname)) return { kind: "evidence" };
     if (isEnglishPath(window.location.pathname)) return { kind: "english" };
 
     const legacyProjectId = parseProjectHash(window.location.hash);
@@ -228,6 +240,11 @@ function usePageRoute() {
 
       if (isProfilePath(window.location.pathname)) {
         setRoute({ kind: "profile" });
+        return;
+      }
+
+      if (isEvidencePath(window.location.pathname)) {
+        setRoute({ kind: "evidence" });
         return;
       }
 
@@ -356,9 +373,9 @@ const recognitionNotes = [
   { year: "2026", title: "AI UNIVERSITY 產學實習成果發表", status: "銅獎", tone: "award" as StatusTone },
   { year: "2026", title: "智創未來生成式 AI 創意設計競賽", status: "NightOwl ICU 佳作", tone: "award" as StatusTone },
   { year: "2026", title: "欣銓半導體書院 AI Agent 實作競賽", status: "YieldSentry 佳作", tone: "award" as StatusTone },
-  { year: "2026", title: "FPGA 智慧運算與終端節點創意應用競賽", status: "A3D3 Track 優選獎", tone: "award" as StatusTone },
+  { year: "2026", title: "FPGA 智慧運算與終端節點創意應用競賽", status: "A3D3 Track 優選獎 / AMD Track 入圍決賽", tone: "award" as StatusTone },
   { year: "2026", title: "ICBEI 2026", status: "VAP 研究摘要接受 / 待發表", tone: "accepted" as StatusTone },
-  { year: "2026", title: "全國醫學工程創意競賽", status: "嚥域入圍決賽", tone: "review" as StatusTone },
+  { year: "2026", title: "全國醫學工程創意競賽", status: "嚥域入圍決賽 / 現場展示完成", tone: "review" as StatusTone },
 ];
 
 function StatusPill({ tone, children }: StatusPillProps) {
@@ -983,19 +1000,44 @@ function CaseStudyEvidenceIndex({
         <p>07 / EVIDENCE INDEX</p>
         <div>
           <h3 id={`case-evidence-${caseStudy.projectId}`}>把可公開佐證與入口分開列示</h3>
-          <p>每張卡末行的 SOURCE 說明來源類型；RESTRICTED 代表有對應紀錄，但原始佐證不在本站公開。</p>
+          <p>每張卡標示公開性、佐證類型與更新時間。只有標記為 PUBLIC 且附有網址的卡片可開啟；RESTRICTED 代表有對應紀錄，但原始佐證不在本站公開。</p>
         </div>
       </div>
       {caseStudy.evidence.length > 0 && (
         <div className="case-evidence-grid">
-          {caseStudy.evidence.map((item) => (
-            <article className="case-evidence-card" key={`${item.label}-${item.value}`}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-              <p>{item.detail}</p>
-              <small className="case-evidence-source">SOURCE / {item.source}</small>
-            </article>
-          ))}
+          {caseStudy.evidence.map((item) => {
+            const isPublicLink = item.availability === "PUBLIC" && Boolean(item.href);
+            const content = (
+              <>
+                <div className="case-evidence-meta">
+                  <span className={`case-evidence-availability is-${item.availability.toLowerCase()}`}>{item.availability}</span>
+                  <span className="case-evidence-kind">{item.kind}</span>
+                </div>
+                <span className="case-evidence-label">{item.label}</span>
+                <strong>{item.value}</strong>
+                <p>{item.detail}</p>
+                <small className="case-evidence-source">SOURCE / {item.source}{item.asOf ? ` / AS OF ${item.asOf}` : ""}</small>
+                {isPublicLink ? <span className="case-evidence-action">開啟公開佐證 <ExternalLink size={16} aria-hidden="true" /></span> : null}
+              </>
+            );
+
+            return isPublicLink ? (
+              <a
+                aria-label={`在新分頁開啟 ${item.value} 的公開佐證`}
+                className="case-evidence-card is-public"
+                href={item.href}
+                key={`${item.label}-${item.value}`}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {content}
+              </a>
+            ) : (
+              <article className="case-evidence-card" key={`${item.label}-${item.value}`}>
+                {content}
+              </article>
+            );
+          })}
         </div>
       )}
       {caseStudy.links.length > 0 && (
@@ -1004,7 +1046,8 @@ function CaseStudyEvidenceIndex({
             <Link2 size={20} aria-hidden="true" />
             <div>
               <p>RESOURCE INDEX</p>
-              <h4>公開資源入口</h4>
+              <h4>公開資源與技術脈絡</h4>
+              <span>外部連結會標示是成果佐證、技術文件或資料來源；技術與資料背景不等於本案得獎、參賽或效能證明。</span>
             </div>
           </div>
           <ul className="case-link-list">
@@ -1047,6 +1090,45 @@ function CaseStudyEvidenceIndex({
   );
 }
 
+function CaseStudyQuickAssessment({
+  caseStudy,
+  project,
+}: {
+  caseStudy: CaseStudy;
+  project: PortfolioProject;
+}) {
+  const publicMediaCount = caseStudy.media.filter(hasPublicMediaAsset).length;
+  const publicEvidenceCount = caseStudy.evidence.filter((item) => item.availability === "PUBLIC").length;
+  const publicLinkCount = caseStudy.links.filter((link) => link.availability === "PUBLIC").length;
+  const items = [
+    { label: "YEAR", value: project.year },
+    { label: "ROLE", value: project.role },
+    { label: "PUBLIC MEDIA", value: `${String(publicMediaCount).padStart(2, "0")} ITEMS` },
+    { label: "PUBLIC EVIDENCE", value: `${String(publicEvidenceCount).padStart(2, "0")} ITEMS` },
+    { label: "EXTERNAL LINKS", value: `${String(publicLinkCount).padStart(2, "0")} LINKS` },
+  ];
+
+  return (
+    <section className="case-quick-read" aria-labelledby={`case-quick-read-${caseStudy.projectId}`}>
+      <div className="case-study-section-heading">
+        <p>01A / QUICK READ</p>
+        <div>
+          <h3 id={`case-quick-read-${caseStudy.projectId}`}>先用五個欄位判讀這個案例</h3>
+          <p>年份與本人角色以作品檔案為準；公開素材、佐證與外連則只計入目前可在本站安全開啟的項目。</p>
+        </div>
+      </div>
+      <dl className="case-quick-read-grid">
+        {items.map((item) => (
+          <div className="case-quick-read-item" key={item.label}>
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 function FlagshipCaseStudy({
   caseStudy,
   project,
@@ -1083,6 +1165,8 @@ function FlagshipCaseStudy({
           </div>
         </aside>
       </m.div>
+
+      <CaseStudyQuickAssessment caseStudy={caseStudy} project={project} />
 
       <CaseStudyMediaNavigator caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
 
@@ -1314,6 +1398,216 @@ function ProjectDetailPage({
   );
 }
 
+function EvidenceCard({ record }: { record: EvidenceRecord }) {
+  const project = portfolioProjectById.get(record.projectId);
+
+  return (
+    <article className={`evidence-card evidence-card-${record.availability.toLowerCase()}`}>
+      <div className="evidence-card-topline">
+        <p>{record.eyebrow}</p>
+        <StatusPill tone={record.tone}>{record.availability}</StatusPill>
+      </div>
+
+      {record.image ? (
+        <a
+          className="evidence-card-media"
+          href={record.image}
+          rel="noopener noreferrer"
+          target="_blank"
+          aria-label={`開啟 ${record.title} 原圖`}
+        >
+          <img alt={record.imageAlt ?? ""} decoding="async" loading="lazy" src={record.image} />
+          <span>OPEN ORIGINAL <Maximize2 size={16} aria-hidden="true" /></span>
+        </a>
+      ) : record.availability === "RESTRICTED" ? (
+        <div className="evidence-card-withheld" aria-label="原始證明未公開">
+          <BadgeCheck size={28} aria-hidden="true" />
+          <div>
+            <strong>RECORD CHECKED</strong>
+            <span>原始文件因第三方個資或公開授權邊界未上傳</span>
+          </div>
+        </div>
+      ) : (
+        <div className="evidence-card-linked" aria-label="公開連結型證據">
+          <Link2 size={28} aria-hidden="true" />
+          <div>
+            <strong>PUBLIC LINKS AVAILABLE</strong>
+            <span>此項以公開 repository、影片或網站連結呈現；請使用卡片下方入口。</span>
+          </div>
+        </div>
+      )}
+
+      <div className="evidence-card-copy">
+        <div className="evidence-card-meta">
+          <span>{record.kind}</span>
+          <time>{record.date}</time>
+        </div>
+        <h3>{record.title}</h3>
+        <p>{record.claim}</p>
+        <div className="evidence-boundary">
+          <strong>THIS DOES NOT PROVE</strong>
+          <p>{record.boundary}</p>
+        </div>
+        <small>SOURCE / {record.source}</small>
+      </div>
+
+      <div className="evidence-card-actions">
+        {project && (
+          <a href={projectPath(project.id)}>
+            對應專案 <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        )}
+        {record.links?.map((link) => (
+          <a href={link.href} key={link.href} rel="noopener noreferrer" target="_blank">
+            {link.label} <ExternalLink size={15} aria-hidden="true" />
+          </a>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function EvidenceCollection({
+  eyebrow,
+  heading,
+  id,
+  introduction,
+  records,
+}: {
+  eyebrow: string;
+  heading: string;
+  id: string;
+  introduction: string;
+  records: EvidenceRecord[];
+}) {
+  return (
+    <section className="evidence-collection" id={id} aria-labelledby={`${id}-heading`}>
+      <div className="evidence-section-heading">
+        <p>{eyebrow}</p>
+        <div>
+          <h2 id={`${id}-heading`}>{heading}</h2>
+          <p>{introduction}</p>
+        </div>
+        <strong>{String(records.length).padStart(2, "0")}</strong>
+      </div>
+      <div className="evidence-grid">
+        {records.map((record) => <EvidenceCard key={record.id} record={record} />)}
+      </div>
+    </section>
+  );
+}
+
+function EvidencePage() {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      headingRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <m.div
+      animate={{ opacity: 1, y: 0 }}
+      className="evidence-page"
+      exit={{ opacity: 0, y: -18 }}
+      initial={{ opacity: 0, y: 18 }}
+      transition={{ duration: 0.34, ease: "easeOut" }}
+    >
+      <a
+        className="skip-link"
+        href="#evidence-main"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("evidence-main")?.focus();
+        }}
+      >
+        跳至證明索引
+      </a>
+      <header className="detail-topbar evidence-topbar">
+        <a className="detail-brand" href="/" aria-label="回到網站首頁">
+          <span>MY</span>
+          <span>01</span>
+        </a>
+        <p>PROOF &amp; DEMO INDEX / 2026-10-14</p>
+        <a className="detail-back" href="/#recognition" aria-label="返回認可與節點">
+          <ArrowLeft size={18} /> <span>返回作品集</span>
+        </a>
+      </header>
+
+      <main className="evidence-page-main" id="evidence-main" tabIndex={-1}>
+        <section className="evidence-hero" aria-labelledby="evidence-heading">
+          <div>
+            <p className="detail-kicker">PUBLIC EVIDENCE / CLAIM BOUNDARIES</p>
+            <h1 ref={headingRef} id="evidence-heading" tabIndex={-1}>每一項成果，<br />都附上它真正能證明的範圍。</h1>
+            <p className="evidence-hero-lead">獎狀、完賽證書、決賽現場、公開 Demo 與受限紀錄分開呈現。這一頁不把平台收件寫成入圍，也不把合成原型寫成端到端或臨床驗證。</p>
+            <div className="evidence-hero-actions">
+              <a className="primary-action" href="#public-proof">查看公開證明 <ArrowDownRight size={19} aria-hidden="true" /></a>
+              <a className="secondary-action" href="#public-demo">查看 Demo 索引 <ArrowDownRight size={19} aria-hidden="true" /></a>
+            </div>
+          </div>
+          <aside className="evidence-summary-board" aria-label="證明索引摘要">
+            <span>UPDATED</span>
+            <strong>2026<br />10.14</strong>
+            <dl>
+              <div><dt>PUBLIC PROOF</dt><dd>{String(publicProofRecords.length).padStart(2, "0")}</dd></div>
+              <div><dt>PUBLIC DEMO</dt><dd>{String(publicDemoRecords.length).padStart(2, "0")}</dd></div>
+              <div><dt>WITHHELD</dt><dd>{String(restrictedEvidenceRecords.length).padStart(2, "0")}</dd></div>
+            </dl>
+          </aside>
+        </section>
+
+        <section className="evidence-legend" aria-labelledby="evidence-legend-heading">
+          <div>
+            <p>00 / HOW TO READ</p>
+            <h2 id="evidence-legend-heading">先讀狀態，再看圖片。</h2>
+          </div>
+          <dl>
+            <div><dt>AWARD</dt><dd>獎狀或已核對的主辦結果紀錄。</dd></div>
+            <div><dt>PARTICIPATION / FINALIST</dt><dd>只證明參與、完賽或決賽現場，不自動代表獲獎。</dd></div>
+            <div><dt>DEMO</dt><dd>證明公開介面或工程表述存在，不替代真實部署、E2E 或臨床驗證。</dd></div>
+            <div><dt>RESTRICTED</dt><dd>紀錄已核對，但原件含第三方個資、合作資訊或尚未取得公開授權。</dd></div>
+          </dl>
+        </section>
+
+        <EvidenceCollection
+          eyebrow="01 / PUBLIC PROOF"
+          heading="可直接開啟的證明"
+          id="public-proof"
+          introduction="公開檔案只保留本人資料或無個資的團隊證明；每張卡都列出不能延伸的主張。"
+          records={publicProofRecords}
+        />
+        <EvidenceCollection
+          eyebrow="02 / PUBLIC DEMO"
+          heading="Demo、工程視圖與公開網站"
+          id="public-demo"
+          introduction="截圖與連結呈現可以公開檢視的工作切面；合成資料、proxy data 與工程視覺會保持原本標籤。"
+          records={publicDemoRecords}
+        />
+        <EvidenceCollection
+          eyebrow="03 / RESTRICTED RECORD"
+          heading="已核對、但不公開原件"
+          id="restricted-record"
+          introduction="第三方姓名、主辦寄件者資料、合作資訊或正式文件授權不明時，網站只列狀態與限制。"
+          records={restrictedEvidenceRecords}
+        />
+
+        <section className="evidence-return">
+          <div>
+            <p>PUBLIC RECORD / NEXT STEP</p>
+            <h2>回到專案，看完整脈絡。</h2>
+            <p>證明頁只回答「這項紀錄能證明什麼」；研究問題、本人角色、方法與公開範圍仍以各專案頁為準。</p>
+          </div>
+          <a href="/#archive">瀏覽全部專案 <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </section>
+      </main>
+    </m.div>
+  );
+}
+
 function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCharacterPreview | null }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -1365,6 +1659,7 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
             <p className="profile-page-lead">以生醫 AI、邊緣運算與智慧工作流為主軸，從問題定義、模型方法到系統交接，持續累積跨領域的實作經驗。</p>
             <div className="profile-page-actions">
               <a className="primary-action" href="/#featured">查看六件旗艦案例 <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href={evidencePath()}>公開證明與 Demo <ArrowUpRight size={19} /></a>
               <a className="secondary-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={19} /></a>
             </div>
           </div>
@@ -1447,6 +1742,11 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
             <p>合作、研究交流與系統原型討論，可先透過公開案例與 GitHub 了解目前可分享的工作內容；受限資料與合作內容不在本站揭露範圍內。</p>
           </div>
           <div className="profile-contact-links">
+            <a className="profile-github-link" href={evidencePath()}>
+              <BadgeCheck size={24} aria-hidden="true" />
+              <span><small>PUBLIC EVIDENCE</small><strong>證明、參與紀錄與 Demo 索引</strong></span>
+              <ArrowUpRight size={21} aria-hidden="true" />
+            </a>
             <a className="profile-github-link" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">
               <Github size={24} aria-hidden="true" />
               <span><small>PRIMARY PUBLIC ENTRY</small><strong>GitHub / Daniel-Tsai-9487</strong></span>
@@ -1509,6 +1809,7 @@ function EnglishPage() {
             <p className="english-lead">A concise selection of six projects across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education. Each case stays within its public scope.</p>
             <div className="english-hero-actions">
               <a className="primary-action" href="#english-cases">Explore six cases <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href={evidencePath()}>Evidence index (ZH) <ArrowUpRight size={19} /></a>
               <a className="secondary-action" href="/">Open Chinese portfolio <ArrowUpRight size={19} /></a>
             </div>
           </div>
@@ -1583,13 +1884,14 @@ function App() {
   const pageRoute = usePageRoute();
   const projectRouteId = pageRoute.kind === "project" ? pageRoute.projectId : null;
   const isProfileRoute = pageRoute.kind === "profile";
+  const isEvidenceRoute = pageRoute.kind === "evidence";
   const isEnglishRoute = pageRoute.kind === "english";
-  useInitialSectionHash(projectRouteId !== null || isProfileRoute || isEnglishRoute);
+  useInitialSectionHash(projectRouteId !== null || isProfileRoute || isEvidenceRoute || isEnglishRoute);
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
   const localCharacterPreview = useCharacterPreview();
-  useRevealOnScroll(projectRouteId);
+  useRevealOnScroll(projectRouteId ?? pageRoute.kind);
   const routedProject = useMemo(
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
     [projectRouteId],
@@ -1616,6 +1918,12 @@ function App() {
       return;
     }
 
+    if (isEvidenceRoute) {
+      document.title = siteConfig.evidenceTitle;
+      previousProjectRouteRef.current = null;
+      return;
+    }
+
     if (isEnglishRoute) {
       document.title = siteConfig.englishTitle;
       previousProjectRouteRef.current = null;
@@ -1628,7 +1936,7 @@ function App() {
       pendingSectionIdRef.current = targetId;
     }
     previousProjectRouteRef.current = null;
-  }, [isEnglishRoute, isProfileRoute, routedProject]);
+  }, [isEnglishRoute, isEvidenceRoute, isProfileRoute, routedProject]);
 
   const scrollToPendingSection = () => {
     const targetId = pendingSectionIdRef.current;
@@ -1656,6 +1964,8 @@ function App() {
             />
           ) : isProfileRoute ? (
             <ProfilePage key="profile-page" localCharacterPreview={localCharacterPreview} />
+          ) : isEvidenceRoute ? (
+            <EvidencePage key="evidence-page" />
           ) : isEnglishRoute ? (
             <EnglishPage key="english-page" />
           ) : (
@@ -1686,6 +1996,7 @@ function App() {
         <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="主要導覽">
           <a href="#featured" onClick={closeMenu}>旗艦案例</a>
           <a href="#archive" onClick={closeMenu}>作品檔案</a>
+          <a href={evidencePath()} onClick={closeMenu}>公開證明</a>
           <a href={profilePath()} onClick={closeMenu}>公開概要</a>
           <a href={englishPath()} lang="en" onClick={closeMenu}>EN</a>
           <a href="#contact" onClick={closeMenu}>合作窗口</a>
@@ -1864,6 +2175,10 @@ function App() {
               </article>
             ))}
           </div>
+          <a className="recognition-evidence-link reveal" href={evidencePath()}>
+            <span><BadgeCheck size={22} aria-hidden="true" /><strong>開啟公開證明與 Demo 索引</strong></span>
+            <span>獎狀、完賽／決賽紀錄、公開原型與不公開原件的邊界 <ArrowUpRight size={18} aria-hidden="true" /></span>
+          </a>
         </section>
 
         <section id="capabilities" className="capabilities-section" aria-labelledby="capabilities-heading">
@@ -1898,6 +2213,7 @@ function App() {
               <p>研究交流、系統原型、跨域競賽與產品實驗，都可以先從問題邊界、可公開資料與預期交付開始定義。</p>
               <div className="contact-actions">
                 <a className="contact-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={21} /></a>
+                <a className="contact-secondary" href={evidencePath()}>查看公開證明 <ArrowUpRight size={19} /></a>
                 <a className="contact-secondary" href={profilePath()}>查看公開專業概要 <ArrowUpRight size={19} /></a>
               </div>
             </div>
@@ -1907,6 +2223,13 @@ function App() {
               <p>以下連結均由本人提供。研究、合作與未公開專案仍以各案例的公開範圍為準。</p>
               <nav className="contact-socials" aria-label="公開個人頁面">
                 <ul className="contact-social-list">
+                  <li>
+                    <a className="contact-social-link" href={evidencePath()} aria-label="查看公開證明與 Demo 索引">
+                      <BadgeCheck size={20} aria-hidden="true" />
+                      <span className="contact-social-meta"><span>PUBLIC EVIDENCE</span><span>證明、紀錄與 Demo 邊界</span></span>
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </a>
+                  </li>
                   <li>
                     <a className="contact-social-link" href={profilePath()} aria-label="查看公開專業概要">
                       <BookOpen size={20} aria-hidden="true" />
