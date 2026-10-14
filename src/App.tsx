@@ -22,6 +22,7 @@ import {
   Github,
   Instagram,
   Link2,
+  Mail,
   Menu,
   Maximize2,
   MoveRight,
@@ -50,7 +51,8 @@ import {
 } from "./data/evidence";
 import { englishPath, evidencePath, profilePath, projectPath, siteConfig } from "./site";
 
-type ArchiveFilter = ProjectLane | "all" | "case-study" | "award" | "coursework";
+type ArchiveLaneFilter = Exclude<ProjectLane, "featured">;
+type ArchiveFilter = ArchiveLaneFilter | "all" | "case-study" | "award" | "coursework";
 
 type StatusPillProps = {
   tone: StatusTone;
@@ -79,7 +81,8 @@ const localCharacterBackdropAssets: Record<LocalCharacterPlacement, LocalCharact
   archive: "huTao",
 };
 
-const archiveLaneFilters: Array<ProjectLane | "all"> = ["all", "featured", "research", "proposal", "academic", "tool", "creative"];
+const defaultArchiveFilter: ArchiveFilter = "case-study";
+const archiveLaneFilters: Array<ArchiveLaneFilter | "all"> = ["all", "research", "proposal", "academic", "tool", "creative"];
 const archiveQuickFilters: Array<{ id: Extract<ArchiveFilter, "case-study" | "award" | "coursework">; label: string; eyebrow: string }> = [
   { id: "case-study", label: "完整 Case Study", eyebrow: "六件可深入閱讀的旗艦案例，含公開素材、佐證與範圍說明" },
   { id: "award", label: "獲獎", eyebrow: "保留已明確列示獎項的作品，不把入圍、審查或原型混為獲獎" },
@@ -87,7 +90,6 @@ const archiveQuickFilters: Array<{ id: Extract<ArchiveFilter, "case-study" | "aw
 ];
 const archiveFilterInfo: Record<ArchiveFilter, { label: string; eyebrow: string }> = {
   all: laneLabels.all,
-  featured: laneLabels.featured,
   research: laneLabels.research,
   proposal: laneLabels.proposal,
   academic: laneLabels.academic,
@@ -105,7 +107,34 @@ const flagshipProjects = flagshipProjectIds.flatMap((projectId) => {
   const project = portfolioProjectById.get(projectId);
   return project ? [project] : [];
 });
+const archiveFilterValues = new Set<ArchiveFilter>(Object.keys(archiveFilterInfo) as ArchiveFilter[]);
+const professionalContactHref = `mailto:${siteConfig.email}?subject=${encodeURIComponent("作品集合作洽談")}`;
+const asOfDateFormatter = new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" });
 const loadMotionFeatures = () => import("./motionFeatures").then((module) => module.default);
+
+function formatAsOfDate(value: string) {
+  return asOfDateFormatter.format(new Date(`${value}T00:00:00+08:00`));
+}
+
+function readArchiveFilterFromUrl(): ArchiveFilter {
+  if (typeof window === "undefined") return defaultArchiveFilter;
+
+  const requestedFilter = new URLSearchParams(window.location.search).get("archive");
+  if (requestedFilter === "featured") return defaultArchiveFilter;
+  return requestedFilter && archiveFilterValues.has(requestedFilter as ArchiveFilter)
+    ? requestedFilter as ArchiveFilter
+    : defaultArchiveFilter;
+}
+
+function writeArchiveFilterToUrl(filter: ArchiveFilter) {
+  const url = new URL(window.location.href);
+  if (filter === defaultArchiveFilter) {
+    url.searchParams.delete("archive");
+  } else {
+    url.searchParams.set("archive", filter);
+  }
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
 
 function isLocalCharacterPreview(value: unknown): value is LocalCharacterPreview {
   if (!value || typeof value !== "object") return false;
@@ -469,18 +498,20 @@ function ScrollingSubtitle() {
 }
 
 function SystemMap() {
+  const latestAsOf = [...currentThreads].map((thread) => thread.asOf).sort().reverse()[0] ?? "2026-10-15";
+
   return (
     <section id="current-work" className="system-map" aria-labelledby="system-map-heading">
       <div className="system-map-header">
-        <span><Radar size={18} aria-hidden="true" /> CURRENT WORK / PUBLIC STATUS</span>
-        <span>{String(currentThreads.length).padStart(2, "0")} TRACKS / 2026</span>
+        <span><Radar size={18} aria-hidden="true" /> RECENT UPDATES / CURRENT PROJECTS</span>
+        <span>{String(currentThreads.length).padStart(2, "0")} TRACKS / UPDATED {formatAsOfDate(latestAsOf)}</span>
       </div>
       <div className="system-map-intro">
         <div>
-          <p>PUBLIC STATUS BOARD</p>
-          <h2 id="system-map-heading">目前進行中工作</h2>
+          <p>NOW / PUBLIC STATUS BOARD</p>
+          <h2 id="system-map-heading">最近更新</h2>
         </div>
-        <span>代表成果以外，這些公開工作仍在持續推進。</span>
+        <span>正在推進的專案各自帶有 asOf 日期；再次造訪時，可以直接確認哪些狀態有更新。</span>
       </div>
       <ol className="system-thread-list">
         {currentThreads.map((thread, index) => (
@@ -490,6 +521,7 @@ function SystemMap() {
               <span className="thread-copy">
                 <span className="thread-meta">
                   <small className="thread-lane">{thread.lane}</small>
+                  <time className="thread-as-of" dateTime={thread.asOf}>AS OF {formatAsOfDate(thread.asOf)}</time>
                   <span className={`thread-status thread-status-${thread.tone}`}><span aria-hidden="true" />{thread.status}</span>
                 </span>
                 <strong>{thread.label}</strong>
@@ -502,8 +534,83 @@ function SystemMap() {
         ))}
       </ol>
       <div className="system-map-footer">
-        <span><span className="signal-dot" /> 狀態與公開範圍均以各案頁面為準</span>
+        <span><span className="signal-dot" /> 最近更新至 {formatAsOfDate(latestAsOf)}；狀態與公開範圍以各案頁面為準</span>
       </div>
+    </section>
+  );
+}
+
+function RecognitionSection() {
+  return (
+    <section id="recognition" className="recognition-section" aria-labelledby="recognition-heading">
+      <div className="section-heading reveal">
+        <p className="section-index">03 / AWARDS &amp; EVIDENCE</p>
+        <div>
+          <h2 id="recognition-heading">獎狀&amp;證明</h2>
+          <p>先看可直接開啟的證明，再進入完整作品庫。獎項、課程證書、參與／完賽與決賽紀錄各自保留原本的意義。</p>
+        </div>
+        <p className="section-side-note">PUBLIC PROOF<br />OPEN ORIGINAL</p>
+      </div>
+      <div className="recognition-list">
+        {recognitionNotes.map((note) => (
+          <article className="recognition-row reveal" key={`${note.title}-${note.status}`}>
+            <span className="recognition-year">{note.year}</span>
+            <div><Award size={21} /><strong>{note.title}</strong></div>
+            <StatusPill tone={note.tone}>{note.status}</StatusPill>
+          </article>
+        ))}
+      </div>
+      <div className="recognition-proof-panel" id="public-proof-preview">
+        <div className="recognition-proof-heading reveal">
+          <div>
+            <p>PUBLIC PROOF PREVIEW</p>
+            <h3>可直接開啟的證明</h3>
+          </div>
+          <p>
+            目前公開 {publicProofPreviewRecords.length} 件可直接開啟的影像證明，其中 {publicAwardProofCount} 件為獎項證明；
+            其餘依課程證書、參與／完賽與決賽紀錄分開標示。
+          </p>
+        </div>
+        <div className="recognition-proof-grid" aria-label="公開獎狀與證明預覽">
+          {publicProofPreviewRecords.map((record) => (
+            <a
+              className="recognition-proof-card reveal"
+              href={record.image}
+              key={record.id}
+              rel="noopener noreferrer"
+              target="_blank"
+              aria-label={`開啟 ${record.title} 原圖`}
+            >
+              <span className="recognition-proof-media">
+                <img
+                  alt={record.imageAlt ?? ""}
+                  decoding="async"
+                  height={record.imageHeight}
+                  loading="lazy"
+                  src={record.image}
+                  width={record.imageWidth}
+                />
+                <span>OPEN ORIGINAL <Maximize2 size={15} aria-hidden="true" /></span>
+              </span>
+              <span className="recognition-proof-copy">
+                <span>{evidenceKindLabels[record.kind]} / {record.date}</span>
+                <strong>{record.title}</strong>
+              </span>
+            </a>
+          ))}
+        </div>
+        <div className="recognition-proof-restricted reveal">
+          <BadgeCheck size={24} aria-hidden="true" />
+          <div>
+            <strong>另有 3 件獲獎紀錄保留在完整索引</strong>
+            <p>A3D3 與 NightOwl 原始資料含第三方資訊；YieldSentry 尚未找到可公開的正式獎狀或主辦公告，因此不把文字紀錄偽裝成公開獎狀。</p>
+          </div>
+        </div>
+      </div>
+      <a className="recognition-evidence-link reveal" href={evidencePath()}>
+        <span><BadgeCheck size={22} aria-hidden="true" /><strong>開啟公開證明與 Demo 索引</strong></span>
+        <span>獎狀、完賽／決賽紀錄、公開原型與不公開原件的邊界 <ArrowUpRight size={18} aria-hidden="true" /></span>
+      </a>
     </section>
   );
 }
@@ -621,12 +728,12 @@ function ProjectArchive({
   return (
     <section id="archive" className="archive-section" aria-labelledby="archive-heading">
       <div className="section-heading reveal">
-        <p className="section-index">03 / COMPLETE ARCHIVE</p>
+        <p className="section-index">05 / COMPLETE ARCHIVE</p>
         <div>
           <h2 id="archive-heading">作品檔案庫</h2>
-          <p>把已完成的成果、研究型原型、計畫、課程實作與創作企畫放在同一份索引中，但不讓不同狀態混在一起。</p>
+          <p>預設先顯示六件完整案例；需要時再用「全部作品」或分類篩選展開 38 件檔案。</p>
         </div>
-        <p className="archive-count">{visibleProjects.length.toString().padStart(2, "0")} / {portfolioProjects.length.toString().padStart(2, "0")} FILES<br />STATUS-BOUND</p>
+        <p className="archive-count" aria-atomic="true" aria-live="polite">{visibleProjects.length.toString().padStart(2, "0")} / {portfolioProjects.length.toString().padStart(2, "0")} FILES<br />{activeFilter.label}</p>
       </div>
 
       <div className="archive-filter-wrap reveal" aria-label="作品分類篩選">
@@ -730,7 +837,7 @@ function CaseStudyFlow({
     >
       <LocalCharacterBackdrop placement="flow" preview={localCharacterPreview} />
       <div className="case-study-section-heading">
-          <p>03 / SYSTEM FLOW</p>
+          <p>04A / SYSTEM FLOW</p>
         <div>
           <h3 id={`case-flow-${caseStudy.projectId}`}>從問題到可交接的系統路徑</h3>
           <p>每一節點都對應實際工作中的資料、方法、介面或人工責任，不將流程圖當成裝飾。</p>
@@ -852,7 +959,7 @@ function CaseStudyMediaNavigator({
       >
         <LocalCharacterBackdrop placement="media" preview={localCharacterPreview} />
         <div className="case-study-section-heading">
-          <p>02 / PUBLIC MEDIA</p>
+          <p>04B / PUBLIC MEDIA</p>
           <div>
             <h3 id={`case-media-${caseStudy.projectId}`}>公開素材與案例切面</h3>
             <p>
@@ -1012,10 +1119,10 @@ function CaseStudyEvidenceIndex({
     >
       <LocalCharacterBackdrop placement="evidence" preview={localCharacterPreview} />
       <div className="case-study-section-heading">
-        <p>07 / EVIDENCE INDEX</p>
+        <p>03A / PUBLIC EVIDENCE</p>
         <div>
-          <h3 id={`case-evidence-${caseStudy.projectId}`}>把可公開佐證與入口分開列示</h3>
-          <p>每張卡標示公開性、佐證類型與更新時間。只有標記為 PUBLIC 且附有網址的卡片可開啟；RESTRICTED 代表有對應紀錄，但原始佐證不在本站公開。</p>
+          <h3 id={`case-evidence-${caseStudy.projectId}`}>公開證明與來源索引</h3>
+          <p>可開啟的公開佐證附上連結；受限紀錄只保留來源與狀態，方便快速分辨。</p>
         </div>
       </div>
       {caseStudy.evidence.length > 0 && (
@@ -1062,7 +1169,7 @@ function CaseStudyEvidenceIndex({
             <div>
               <p>RESOURCE INDEX</p>
               <h4>公開資源與技術脈絡</h4>
-              <span>外部連結會標示是成果佐證、技術文件或資料來源；技術與資料背景不等於本案得獎、參賽或效能證明。</span>
+              <span>外部連結依成果佐證、技術文件或資料來源分別標示。</span>
             </div>
           </div>
           <ul className="case-link-list">
@@ -1126,10 +1233,10 @@ function CaseStudyQuickAssessment({
   return (
     <section className="case-quick-read" aria-labelledby={`case-quick-read-${caseStudy.projectId}`}>
       <div className="case-study-section-heading">
-        <p>01A / QUICK READ</p>
+        <p>02 / MY ROLE</p>
         <div>
-          <h3 id={`case-quick-read-${caseStudy.projectId}`}>先用五個欄位判讀這個案例</h3>
-          <p>年份與本人角色以作品檔案為準；公開素材、佐證與外連則只計入目前可在本站安全開啟的項目。</p>
+          <h3 id={`case-quick-read-${caseStudy.projectId}`}>本人角色與工作範圍</h3>
+          <p>先說明我負責的部分，再補上年份與目前可公開的素材數量。</p>
         </div>
       </div>
       <dl className="case-quick-read-grid">
@@ -1140,6 +1247,118 @@ function CaseStudyQuickAssessment({
           </div>
         ))}
       </dl>
+      <div className="case-role-contribution">
+        <div>
+          <p>MY CONTRIBUTION</p>
+          <ul>{caseStudy.contribution.map((item) => <li key={item}>{item}</li>)}</ul>
+        </div>
+        <div>
+          <p>TOOLS / METHODS</p>
+          <ul className="project-tags" aria-label={`${project.title} 技術標籤`}>
+            {project.tags.map((tag) => <li key={tag}>{tag}</li>)}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type CaseInspectionItem = {
+  label: "Repository" | "Demo" | "架構" | "Benchmark";
+  status: "PUBLIC" | "NOT PUBLIC";
+  title: string;
+  detail: string;
+  href?: string;
+};
+
+function CaseStudyInspectionGrid({ caseStudy }: { caseStudy: CaseStudy }) {
+  const publicRepository = caseStudy.links.find(
+    (link) => link.availability === "PUBLIC" && /repository|github|source code/i.test(`${link.label} ${link.title}`),
+  );
+  const repositoryRestriction = caseStudy.links.find(
+    (link) => link.availability === "RESTRICTED" && /source|material|access|repository|原始碼|素材/i.test(`${link.label} ${link.title} ${link.detail}`),
+  );
+  const publicDemo = caseStudy.media.find(hasPublicMediaAsset);
+  const publicBenchmark = caseStudy.evidence.find(
+    (item) => item.availability === "PUBLIC" && /benchmark|auroc|auprc|accuracy|f1 score|latency|fps|效能指標|模型分數/i.test(`${item.label} ${item.value}`),
+  );
+  const items: CaseInspectionItem[] = [
+    publicRepository
+      ? { label: "Repository", status: "PUBLIC", title: publicRepository.title, detail: publicRepository.detail, href: publicRepository.href }
+      : {
+          label: "Repository",
+          status: "NOT PUBLIC",
+          title: "未提供公開 Repository",
+          detail: repositoryRestriction?.detail ?? "原始碼與工作檔尚未整理為可公開、可長期維護的版本。",
+        },
+    publicDemo
+      ? {
+          label: "Demo",
+          status: "PUBLIC",
+          title: publicDemo.title,
+          detail: "本站提供可直接開啟的公開案例切面。",
+          href: `#media-${caseStudy.projectId}`,
+        }
+      : { label: "Demo", status: "NOT PUBLIC", title: "未提供公開 Demo", detail: "目前案例只有文字紀錄，沒有可公開的展示內容。" },
+    {
+      label: "架構",
+      status: "PUBLIC",
+      title: "系統路徑與技術決策",
+      detail: "本站以流程節點整理資料、方法、介面與人工責任。",
+      href: `#case-flow-${caseStudy.projectId}`,
+    },
+    publicBenchmark
+      ? {
+          label: "Benchmark",
+          status: "PUBLIC",
+          title: publicBenchmark.value,
+          detail: publicBenchmark.detail,
+          href: publicBenchmark.href,
+        }
+      : {
+          label: "Benchmark",
+          status: "NOT PUBLIC",
+          title: "未提供可公開 Benchmark",
+          detail: "目前沒有可公開且可重現的效能比較；不以成果紀錄替代 Benchmark。",
+        },
+  ];
+
+  return (
+    <section className="case-inspection" aria-labelledby={`case-inspection-${caseStudy.projectId}`}>
+      <div className="case-study-section-heading">
+        <p>03 / INSPECTABILITY</p>
+        <div>
+          <h3 id={`case-inspection-${caseStudy.projectId}`}>四個固定入口，快速判讀可公開程度</h3>
+          <p>Repository、Demo、架構與 Benchmark 永遠出現在同一位置；沒有公開內容時直接說明原因。</p>
+        </div>
+      </div>
+      <div className="case-inspection-grid">
+        {items.map((item) => {
+          const content = (
+            <>
+              <span className={`case-inspection-status is-${item.status === "PUBLIC" ? "public" : "unavailable"}`}>{item.status}</span>
+              <span className="case-inspection-label">{item.label}</span>
+              <strong>{item.title}</strong>
+              <p>{item.detail}</p>
+              {item.href ? <span className="case-inspection-action">開啟內容 <ArrowUpRight size={17} aria-hidden="true" /></span> : null}
+            </>
+          );
+
+          return item.href ? (
+            <a
+              className="case-inspection-item is-linked"
+              href={item.href}
+              key={item.label}
+              rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              target={item.href.startsWith("http") ? "_blank" : undefined}
+            >
+              {content}
+            </a>
+          ) : (
+            <article className="case-inspection-item" key={item.label}>{content}</article>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -1163,7 +1382,7 @@ function FlagshipCaseStudy({
         whileInView={{ opacity: 1, y: 0 }}
       >
         <div className="case-study-title-block">
-          <p className="case-study-label">01 / {caseStudy.label}</p>
+          <p className="case-study-label">CASE OVERVIEW / {caseStudy.label}</p>
           <h2 id={`case-heading-${project.id}`}>{caseStudy.headline}</h2>
           <p className="case-study-lead">{caseStudy.lead}</p>
         </div>
@@ -1173,74 +1392,18 @@ function FlagshipCaseStudy({
             <strong>{caseStudy.focus}</strong>
           </div>
           <div>
-            <span>MY CONTRIBUTION</span>
-            <ul>
-              {caseStudy.contribution.map((item) => <li key={item}>{item}</li>)}
-            </ul>
+            <span>CURRENT STATE</span>
+            <strong>{project.status}</strong>
           </div>
         </aside>
       </m.div>
 
-      <CaseStudyQuickAssessment caseStudy={caseStudy} project={project} />
-
-      <CaseStudyMediaNavigator caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
-
-      <CaseStudyFlow caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
-
-      <section className="case-study-chapters" aria-labelledby={`case-chapters-${caseStudy.projectId}`}>
-        <div className="case-study-section-heading">
-          <p>04 / CASE NOTES</p>
-          <div>
-            <h3 id={`case-chapters-${caseStudy.projectId}`}>為什麼做、怎麼做、做到哪裡</h3>
-            <p>以工作判斷與責任邊界為主，而不是只堆疊技術名稱。</p>
-          </div>
-        </div>
-        <div className="case-chapter-list">
-          {caseStudy.chapters.map((chapter, index) => (
-            <m.article
-              className="case-chapter"
-              initial={{ opacity: 0, y: 24 }}
-              key={chapter.index}
-              transition={{ delay: index * 0.07, duration: 0.42, ease: "easeOut" }}
-              viewport={{ amount: 0.24, once: true }}
-              whileInView={{ opacity: 1, y: 0 }}
-            >
-              <div className="case-chapter-index"><span>{chapter.index}</span><span>{chapter.eyebrow}</span></div>
-              <h4>{chapter.title}</h4>
-              <p>{chapter.copy}</p>
-            </m.article>
-          ))}
-        </div>
-      </section>
-
-      <section className="case-study-history" aria-labelledby={`case-history-${caseStudy.projectId}`}>
-        <div className="case-study-section-heading">
-          <p>05 / PROJECT RECORD</p>
-          <div>
-            <h3 id={`case-history-${caseStudy.projectId}`}>把進度寫成可回看的紀錄</h3>
-            <p>每個節點標示工作階段與目前能公開陳述的狀態。</p>
-          </div>
-        </div>
-        <ol className="case-milestone-list">
-          {caseStudy.milestones.map((milestone, index) => (
-            <li key={`${milestone.stage}-${milestone.title}`}>
-              <span className="case-milestone-number">{String(index + 1).padStart(2, "0")}</span>
-              <div>
-                <p>{milestone.stage}</p>
-                <h4>{milestone.title}</h4>
-                <span>{milestone.copy}</span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
       <section className="case-study-outcomes" aria-labelledby={`case-outcomes-${caseStudy.projectId}`}>
         <div className="case-study-section-heading">
-          <p>06 / OUTCOMES</p>
+          <p>01 / OUTCOMES</p>
           <div>
-            <h3 id={`case-outcomes-${caseStudy.projectId}`}>留下的不是一張漂亮截圖</h3>
-            <p>成果以競賽、角色、方法或系統狀態陳述，不把原型誇大成未完成的部署。</p>
+            <h3 id={`case-outcomes-${caseStudy.projectId}`}>交付與成果</h3>
+            <p>先看目前留下的系統、方法與正式成果，再往下閱讀本人角色與證明。</p>
           </div>
         </div>
         <div className="case-outcome-grid">
@@ -1261,12 +1424,68 @@ function FlagshipCaseStudy({
         </div>
       </section>
 
+      <CaseStudyQuickAssessment caseStudy={caseStudy} project={project} />
+
+      <CaseStudyInspectionGrid caseStudy={caseStudy} />
+
       <CaseStudyEvidenceIndex caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
+
+      <section className="case-study-chapters" aria-labelledby={`case-chapters-${caseStudy.projectId}`}>
+        <div className="case-study-section-heading">
+          <p>04 / TECHNICAL DECISIONS</p>
+          <div>
+            <h3 id={`case-chapters-${caseStudy.projectId}`}>為什麼這樣設計</h3>
+            <p>聚焦真正影響系統走向的判斷，不只羅列工具名稱。</p>
+          </div>
+        </div>
+        <div className="case-chapter-list">
+          {caseStudy.chapters.map((chapter, index) => (
+            <m.article
+              className="case-chapter"
+              initial={{ opacity: 0, y: 24 }}
+              key={chapter.index}
+              transition={{ delay: index * 0.07, duration: 0.42, ease: "easeOut" }}
+              viewport={{ amount: 0.24, once: true }}
+              whileInView={{ opacity: 1, y: 0 }}
+            >
+              <div className="case-chapter-index"><span>{chapter.index}</span><span>{chapter.eyebrow}</span></div>
+              <h4>{chapter.title}</h4>
+              <p>{chapter.copy}</p>
+            </m.article>
+          ))}
+        </div>
+      </section>
+
+      <CaseStudyFlow caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
+
+      <CaseStudyMediaNavigator caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
+
+      <section className="case-study-history" aria-labelledby={`case-history-${caseStudy.projectId}`}>
+        <div className="case-study-section-heading">
+          <p>04C / PROJECT RECORD</p>
+          <div>
+            <h3 id={`case-history-${caseStudy.projectId}`}>專案節點</h3>
+            <p>用時間與階段補上技術決策的發展脈絡。</p>
+          </div>
+        </div>
+        <ol className="case-milestone-list">
+          {caseStudy.milestones.map((milestone, index) => (
+            <li key={`${milestone.stage}-${milestone.title}`}>
+              <span className="case-milestone-number">{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <p>{milestone.stage}</p>
+                <h4>{milestone.title}</h4>
+                <span>{milestone.copy}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <section className="case-study-boundaries" aria-labelledby={`case-boundaries-${caseStudy.projectId}`}>
         <div>
-          <p>08 / PUBLIC SCOPE</p>
-          <h3 id={`case-boundaries-${caseStudy.projectId}`}>這個案例公開到哪裡</h3>
+          <p>05 / LIMITS</p>
+          <h3 id={`case-boundaries-${caseStudy.projectId}`}>限制與未公開範圍</h3>
           <span className="case-public-scope-summary">{caseStudy.publicScope.summary}</span>
         </div>
         <ul>
@@ -1359,7 +1578,7 @@ function ProjectDetailPage({
           </aside>
         </section>
 
-        <section className="detail-record" aria-labelledby="detail-record-heading">
+        {!caseStudy && <section className="detail-record" aria-labelledby="detail-record-heading">
           <div className="detail-record-heading">
             <p>CASE RECORD / {String(projectIndex + 1).padStart(2, "0")} OF {String(orderedPortfolioProjects.length).padStart(2, "0")}</p>
             <h2 id="detail-record-heading">專案摘要與公開範圍</h2>
@@ -1382,7 +1601,7 @@ function ProjectDetailPage({
             </div>
             <p className="detail-public-scope"><BadgeCheck size={18} /> {project.publicScope}</p>
           </div>
-        </section>
+        </section>}
 
         {caseStudy && <FlagshipCaseStudy caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} project={project} />}
 
@@ -1425,13 +1644,20 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
 
       {record.image ? (
         <a
-          className="evidence-card-media"
+          className={`evidence-card-media${record.imageHeight && record.imageWidth && record.imageHeight > record.imageWidth ? " is-portrait" : ""}`}
           href={record.image}
           rel="noopener noreferrer"
           target="_blank"
           aria-label={`開啟 ${record.title} 原圖`}
         >
-          <img alt={record.imageAlt ?? ""} decoding="async" loading="lazy" src={record.image} />
+          <img
+            alt={record.imageAlt ?? ""}
+            decoding="async"
+            height={record.imageHeight}
+            loading="lazy"
+            src={record.image}
+            width={record.imageWidth}
+          />
           <span>OPEN ORIGINAL <Maximize2 size={16} aria-hidden="true" /></span>
         </a>
       ) : record.availability === "RESTRICTED" ? (
@@ -1658,7 +1884,7 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
           <span>MY</span>
           <span>01</span>
         </a>
-        <p>PUBLIC PROFILE / 2026</p>
+        <p>ONE-PAGE RESUME / 2026</p>
         <a className="detail-back" href="/#contact" aria-label="返回合作與聯絡區塊">
           <ArrowLeft size={18} /> <span>返回作品集</span>
         </a>
@@ -1668,14 +1894,19 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
         <section className="profile-page-hero">
           <LocalCharacterPreviewArtwork placement="profile" src={localCharacterPreview?.profile} />
           <div className="profile-page-hero-copy">
-            <p className="detail-kicker">PUBLIC PROFESSIONAL SUMMARY</p>
+            <p className="detail-kicker">ONE-PAGE RESUME / PUBLIC PROFESSIONAL SUMMARY</p>
             <h1 ref={headingRef} tabIndex={-1}>蔡旻佑</h1>
             <p className="profile-page-english">MIN-YU TSAI / BIOMEDICAL AI · EDGE SYSTEMS · INTELLIGENT WORKFLOWS</p>
             <p className="profile-page-lead">以生醫 AI、邊緣運算與智慧工作流為主軸，從問題定義、模型方法到系統交接，持續累積跨領域的實作經驗。</p>
+            <div className="profile-availability">
+              <span>OPEN TO WORK / COLLABORATION</span>
+              <p>開放 2027 年 1 月起實習，亦可配合 2027 年 2 月學期安排；可談研究合作、邊緣 AI／系統整合與工程原型協作。</p>
+              <p>地點：桃園／中壢、大台北、新竹；可討論遠端或混合。</p>
+            </div>
             <div className="profile-page-actions">
-              <a className="primary-action" href="/#featured">查看六件旗艦案例 <ArrowDownRight size={19} /></a>
+              <a className="primary-action" href="/#featured">3 分鐘精選 <ArrowDownRight size={19} /></a>
               <a className="secondary-action" href={evidencePath()}>公開證明與 Demo <ArrowUpRight size={19} /></a>
-              <a className="secondary-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={19} /></a>
+              <a className="secondary-action" href={professionalContactHref}>Email 聯絡 <Mail size={19} /></a>
             </div>
           </div>
           <aside className="profile-page-signal-board" aria-hidden="true">
@@ -1695,7 +1926,7 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
           <p>研究型問題需要謹慎地標示資料、驗證與使用邊界；產品型問題則需要讓流程、決策與交付能被看見。我的工作重點是讓這兩種要求在同一個系統設計中對齊。</p>
         </section>
 
-        <section className="profile-flagship-section" aria-labelledby="profile-flagship-heading">
+        <section className="profile-flagship-section" id="resume-highlights" aria-labelledby="profile-flagship-heading">
           <div className="profile-page-section-heading">
             <p>01 / FLAGSHIP CASE STUDIES</p>
             <div>
@@ -1754,9 +1985,14 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
           <div>
             <p className="section-index">03 / PUBLIC CONTACT ROUTES</p>
             <h2 id="profile-contact-heading">從公開資料開始對話。</h2>
-            <p>合作、研究交流與系統原型討論，可先透過公開案例與 GitHub 了解目前可分享的工作內容；受限資料與合作內容不在本站揭露範圍內。</p>
+            <p>目前開放 2027 實習、研究合作與工程原型協作。可以直接寄信，或先從公開案例與 GitHub 了解工作內容。</p>
           </div>
           <div className="profile-contact-links">
+            <a className="profile-github-link" href={professionalContactHref}>
+              <Mail size={24} aria-hidden="true" />
+              <span><small>PROFESSIONAL EMAIL</small><strong>{siteConfig.email}</strong></span>
+              <ArrowUpRight size={21} aria-hidden="true" />
+            </a>
             <a className="profile-github-link" href={evidencePath()}>
               <BadgeCheck size={24} aria-hidden="true" />
               <span><small>PUBLIC EVIDENCE</small><strong>證明、參與紀錄與 Demo 索引</strong></span>
@@ -1894,8 +2130,9 @@ function EnglishPage() {
 
 function App() {
   const [activeFeatured, setActiveFeatured] = useState(0);
-  const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("all");
+  const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>(readArchiveFilterFromUrl);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const pageRoute = usePageRoute();
   const projectRouteId = pageRoute.kind === "project" ? pageRoute.projectId : null;
   const isProfileRoute = pageRoute.kind === "profile";
@@ -1911,16 +2148,44 @@ function App() {
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
     [projectRouteId],
   );
+  const isDarkRoute = Boolean(routedProject) || isProfileRoute || isEnglishRoute;
   const activeProject = flagshipProjects[activeFeatured] ?? flagshipProjects[0];
   const shellStyle = { "--scroll-progress": scrollProgress } as CSSProperties;
   const closeMenu = () => setMenuOpen(false);
+  const changeArchiveFilter = (nextFilter: ArchiveFilter) => {
+    setArchiveFilter(nextFilter);
+    writeArchiveFilterToUrl(nextFilter);
+  };
+
+  useEffect(() => {
+    const syncArchiveFilter = () => setArchiveFilter(readArchiveFilterFromUrl());
+    window.addEventListener("popstate", syncArchiveFilter);
+    return () => window.removeEventListener("popstate", syncArchiveFilter);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setMenuOpen(false);
+      window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    document.documentElement.style.colorScheme = isDarkRoute ? "dark" : "light";
+  }, [isDarkRoute]);
 
   useEffect(() => {
     const wasOnProjectPage = previousProjectRouteRef.current !== null;
 
     if (routedProject) {
       pendingSectionIdRef.current = null;
-      setArchiveFilter(routedProject.lane);
       setMenuOpen(false);
       document.title = `${routedProject.title} | 蔡旻佑作品檔案`;
       previousProjectRouteRef.current = routedProject.id;
@@ -2008,23 +2273,25 @@ function App() {
           <span>MY</span>
           <span>01</span>
         </a>
-        <nav className={menuOpen ? "main-nav is-open" : "main-nav"} aria-label="主要導覽">
-          <a href="#featured" onClick={closeMenu}>旗艦案例</a>
-          <a href="#archive" onClick={closeMenu}>作品檔案</a>
-          <a href={evidencePath()} onClick={closeMenu}>公開證明</a>
-          <a href={profilePath()} onClick={closeMenu}>公開概要</a>
-          <a href={englishPath()} lang="en" onClick={closeMenu}>EN</a>
-          <a href="#contact" onClick={closeMenu}>合作窗口</a>
-        </nav>
         <button
           className="menu-button"
           type="button"
           aria-label={menuOpen ? "關閉選單" : "開啟選單"}
+          aria-controls="primary-navigation"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
+          ref={menuButtonRef}
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
+        <nav className={menuOpen ? "main-nav is-open" : "main-nav"} id="primary-navigation" aria-label="主要導覽">
+          <a href="#featured" onClick={closeMenu}>3 分鐘精選</a>
+          <a href="#recognition" onClick={closeMenu}>獎狀&amp;證明</a>
+          <a href="#archive" onClick={closeMenu}>作品檔案</a>
+          <a href={profilePath()} onClick={closeMenu}>一頁履歷</a>
+          <a href={englishPath()} lang="en" onClick={closeMenu}>EN</a>
+          <a href="#contact" onClick={closeMenu}>專業聯絡</a>
+        </nav>
         <span className="scroll-meter" aria-hidden="true" />
       </header>
 
@@ -2035,10 +2302,14 @@ function App() {
             <p className="eyebrow"><span className="signal-dot" /> PERSONAL SYSTEMS PORTFOLIO / 2026</p>
             <h1 id="hero-heading">蔡旻佑</h1>
             <p className="hero-english">MIN-YU TSAI</p>
+            <p className="hero-role">電機工程學生／系統型 AI 實作者</p>
+            <p className="hero-domains">生醫 AI · 邊緣運算 · 可追溯智慧工作流</p>
             <p className="hero-lead">在生醫 AI、邊緣運算與產品系統之間，把複雜問題轉成可以討論、驗證與交接的設計。</p>
+            <p className="hero-collaboration"><strong>目前可談</strong>研究合作、2027 實習、邊緣 AI／系統整合與工程原型協作。</p>
             <div className="hero-actions">
-              <a className="primary-action" href="#featured">從旗艦案例開始 <ArrowDownRight size={19} /></a>
-              <a className="secondary-action" href="#archive">查看完整檔案 <ArrowDownRight size={19} /></a>
+              <a className="primary-action" href="#featured">3 分鐘精選 <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href={profilePath()}>一頁履歷 <ArrowUpRight size={19} /></a>
+              <a className="secondary-action" href={professionalContactHref}>專業聯絡 <Mail size={19} /></a>
             </div>
           </div>
 
@@ -2090,10 +2361,10 @@ function App() {
 
         <section id="featured" className="featured-section" aria-labelledby="featured-heading">
           <div className="section-heading reveal">
-              <p className="section-index">02 / SIX FLAGSHIP CASE STUDIES</p>
+              <p className="section-index">02 / THREE-MINUTE SELECTION</p>
             <div>
-                <h2 id="featured-heading">六件旗艦案例</h2>
-                <p>從可公開描述的核心系統開始。每一件都可開啟完整 Case Study，並保留各自的研究、合作與驗證邊界。</p>
+                <h2 id="featured-heading">3 分鐘精選</h2>
+                <p>首頁只保留這一套六件旗艦精選；選一件快速讀，再開啟完整 Case Study。</p>
             </div>
               <p className="section-side-note">06 FILES<br />OPEN THE CASE</p>
           </div>
@@ -2120,20 +2391,23 @@ function App() {
             <FeaturedStage key={activeProject.id} localCharacterPreview={localCharacterPreview} project={activeProject} />
           </AnimatePresence>
           <CaseStudyMediaGateway localCharacterPreview={localCharacterPreview} project={activeProject} />
-          <div className="featured-current-work reveal">
-            <SystemMap />
-          </div>
         </section>
+
+        <RecognitionSection />
+
+        <div className="featured-current-work reveal">
+          <SystemMap />
+        </div>
 
         <ProjectArchive
           filter={archiveFilter}
           localCharacterPreview={localCharacterPreview}
-          onFilterChange={setArchiveFilter}
+          onFilterChange={changeArchiveFilter}
         />
 
         <section id="profile" className="profile-section" aria-labelledby="profile-heading">
           <div className="section-heading reveal">
-            <p className="section-index">04 / PROFILE & FIELD NOTES</p>
+            <p className="section-index">06 / PROFILE & FIELD NOTES</p>
             <div>
               <h2 id="profile-heading">經歷不是清單，<br />是能力如何長出來。</h2>
               <p>用研究、競賽、產學合作與課程實作交叉累積，持續練習從資料問題走到系統設計。</p>
@@ -2172,80 +2446,9 @@ function App() {
           </ol>
         </section>
 
-        <section id="recognition" className="recognition-section" aria-labelledby="recognition-heading">
-          <div className="section-heading reveal">
-            <p className="section-index">05 / RECOGNITION LOG</p>
-            <div>
-              <h2 id="recognition-heading">認可與節點</h2>
-              <p>把成果放在可追溯的時間軸上。獎項、摘要接受、入圍與審查中各自保留原本的意義。</p>
-            </div>
-            <p className="section-side-note">AWARD / ACCEPTED<br />FINALIST</p>
-          </div>
-          <div className="recognition-list">
-            {recognitionNotes.map((note) => (
-              <article className="recognition-row reveal" key={`${note.title}-${note.status}`}>
-                <span className="recognition-year">{note.year}</span>
-                <div><Award size={21} /><strong>{note.title}</strong></div>
-                <StatusPill tone={note.tone}>{note.status}</StatusPill>
-              </article>
-            ))}
-          </div>
-          <div className="recognition-proof-panel" id="public-proof-preview">
-            <div className="recognition-proof-heading reveal">
-              <div>
-                <p>PUBLIC PROOF PREVIEW</p>
-                <h3>獎狀&amp;證明</h3>
-              </div>
-              <p>
-                目前公開 {publicProofPreviewRecords.length} 件可直接開啟的影像證明，其中 {publicAwardProofCount} 件為獎項證明；
-                其餘依課程證書、參與／完賽與決賽紀錄分開標示。
-              </p>
-            </div>
-            <div className="recognition-proof-grid" aria-label="公開獎狀與證明預覽">
-              {publicProofPreviewRecords.map((record) => (
-                <a
-                  className="recognition-proof-card reveal"
-                  href={record.image}
-                  key={record.id}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  aria-label={`開啟 ${record.title} 原圖`}
-                >
-                  <span className="recognition-proof-media">
-                    <img
-                      alt={record.imageAlt ?? ""}
-                      decoding="async"
-                      height={640}
-                      loading="lazy"
-                      src={record.image}
-                      width={960}
-                    />
-                    <span>OPEN ORIGINAL <Maximize2 size={15} aria-hidden="true" /></span>
-                  </span>
-                  <span className="recognition-proof-copy">
-                    <span>{evidenceKindLabels[record.kind]} / {record.date}</span>
-                    <strong>{record.title}</strong>
-                  </span>
-                </a>
-              ))}
-            </div>
-            <div className="recognition-proof-restricted reveal">
-              <BadgeCheck size={24} aria-hidden="true" />
-              <div>
-                <strong>另有 3 件獲獎紀錄保留在完整索引</strong>
-                <p>A3D3 與 NightOwl 原始資料含第三方資訊；YieldSentry 尚未找到可公開的正式獎狀或主辦公告，因此不把文字紀錄偽裝成公開獎狀。</p>
-              </div>
-            </div>
-          </div>
-          <a className="recognition-evidence-link reveal" href={evidencePath()}>
-            <span><BadgeCheck size={22} aria-hidden="true" /><strong>開啟公開證明與 Demo 索引</strong></span>
-            <span>獎狀、完賽／決賽紀錄、公開原型與不公開原件的邊界 <ArrowUpRight size={18} aria-hidden="true" /></span>
-          </a>
-        </section>
-
         <section id="capabilities" className="capabilities-section" aria-labelledby="capabilities-heading">
           <div className="section-heading reveal">
-            <p className="section-index">06 / CAPABILITY MODULES</p>
+            <p className="section-index">07 / CAPABILITY MODULES</p>
             <div>
               <h2 id="capabilities-heading">能力模組</h2>
               <p>不是把工具堆在一起，而是理解每一個模組在系統裡需要承擔的角色。</p>
@@ -2270,13 +2473,14 @@ function App() {
         <section id="contact" className="contact-section reveal" aria-labelledby="contact-heading">
           <div className="contact-grid">
             <div>
-              <p className="section-index">07 / CONTACT & COLLABORATION</p>
+              <p className="section-index">08 / CONTACT & COLLABORATION</p>
               <h2 id="contact-heading">從公開案例，<br />開始一段合作對話。</h2>
-              <p>研究交流、系統原型、跨域競賽與產品實驗，都可以先從問題邊界、可公開資料與預期交付開始定義。</p>
+              <p>目前開放 2027 年起的實習、研究合作與工程原型協作；可談桃園／中壢、大台北、新竹，以及遠端或混合安排。</p>
               <div className="contact-actions">
+                <a className="contact-action" href={professionalContactHref}>寄信至 {siteConfig.email} <Mail size={21} /></a>
                 <a className="contact-action" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">前往 GitHub <ArrowUpRight size={21} /></a>
                 <a className="contact-secondary" href={evidencePath()}>查看公開證明 <ArrowUpRight size={19} /></a>
-                <a className="contact-secondary" href={profilePath()}>查看公開專業概要 <ArrowUpRight size={19} /></a>
+                <a className="contact-secondary" href={profilePath()}>查看一頁履歷 <ArrowUpRight size={19} /></a>
               </div>
             </div>
             <aside className="contact-readiness" aria-label="公開個人頁面">
@@ -2286,6 +2490,13 @@ function App() {
               <nav className="contact-socials" aria-label="公開個人頁面">
                 <ul className="contact-social-list">
                   <li>
+                    <a className="contact-social-link" href={professionalContactHref} aria-label={`寄信至 ${siteConfig.email}`}>
+                      <Mail size={20} aria-hidden="true" />
+                      <span className="contact-social-meta"><span>EMAIL</span><span>{siteConfig.email}</span></span>
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </a>
+                  </li>
+                  <li>
                     <a className="contact-social-link" href={evidencePath()} aria-label="查看公開證明與 Demo 索引">
                       <BadgeCheck size={20} aria-hidden="true" />
                       <span className="contact-social-meta"><span>PUBLIC EVIDENCE</span><span>證明、紀錄與 Demo 邊界</span></span>
@@ -2293,9 +2504,9 @@ function App() {
                     </a>
                   </li>
                   <li>
-                    <a className="contact-social-link" href={profilePath()} aria-label="查看公開專業概要">
+                    <a className="contact-social-link" href={profilePath()} aria-label="查看一頁履歷與專業概要">
                       <BookOpen size={20} aria-hidden="true" />
-                      <span className="contact-social-meta"><span>PUBLIC PROFILE</span><span>專業概要與旗艦案例</span></span>
+                      <span className="contact-social-meta"><span>ONE-PAGE RESUME</span><span>履歷、求職狀態與旗艦案例</span></span>
                       <ArrowUpRight size={18} aria-hidden="true" />
                     </a>
                   </li>

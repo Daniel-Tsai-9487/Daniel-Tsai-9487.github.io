@@ -22,7 +22,6 @@ export type PortfolioProject = {
   publicScope: string;
   accent: Accent;
   metric: string;
-  featured?: boolean;
 };
 
 export const laneLabels: Record<ProjectLane | "all", { label: string; eyebrow: string }> = {
@@ -73,7 +72,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱臨床部署、跨院驗證或醫療決策效能。",
     accent: "lime",
     metric: "DATA TO VIEW",
-    featured: true,
   },
   {
     id: "erp-ai-quote",
@@ -93,7 +91,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱個人獨作或正式上線；URS、牌價與客戶文件均不公開。",
     accent: "white",
     metric: "DOCUMENT TO QUOTE",
-    featured: true,
   },
   {
     id: "nightowl-icu",
@@ -113,7 +110,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱臨床驗證、醫療部署或個人獨立完成。",
     accent: "lime",
     metric: "RETRIEVE / REASON",
-    featured: true,
   },
   {
     id: "yieldsentry",
@@ -133,7 +129,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱產線部署、真實良率回收或未重現的模型數字。",
     accent: "blue",
     metric: "TRACEABLE AGENT",
-    featured: true,
   },
   {
     id: "biopulse-soc",
@@ -153,7 +148,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱臨床效能，亦不把全數 HLS／RTL 工作歸為個人完成。",
     accent: "coral",
     metric: "EDGE PROTOTYPE",
-    featured: true,
   },
   {
     id: "bitoguard",
@@ -173,7 +167,6 @@ export const portfolioProjects: PortfolioProject[] = [
     publicScope: "不宣稱獲獎、BitoPro 部署或高準確率。",
     accent: "blue",
     metric: "MODEL TO REVIEW",
-    featured: true,
   },
   {
     id: "tradepilot",
@@ -773,6 +766,7 @@ export const currentThreads = [
     detail: "摘要接受後的海報發表準備",
     lane: "RESEARCH / CONFERENCE",
     status: "摘要接受",
+    asOf: "2026-10-15",
     next: "整理 ICBEI 2026 海報與公開說明素材",
     tone: "accepted" as StatusTone,
   },
@@ -782,6 +776,7 @@ export const currentThreads = [
     detail: "IP 與 EDUSE2 雙組別已完成正式報名",
     lane: "SECURITY / EDGE",
     status: "初賽審查中",
+    asOf: "2026-10-15",
     next: "等待資格／初賽正式結果，不公開評審專用影片與簽署資料",
     tone: "review" as StatusTone,
   },
@@ -791,6 +786,7 @@ export const currentThreads = [
     detail: "2026-10-13 投稿並由平台收件",
     lane: "SAFETY / EDGE",
     status: "主辦審查中",
+    asOf: "2026-10-13",
     next: "維持 G0／G1 synthetic、NOT E2E 邊界並等待正式通知",
     tone: "review" as StatusTone,
   },
@@ -800,6 +796,7 @@ export const currentThreads = [
     detail: "Feedback 階段的 pEEG 反應預測",
     lane: "BIOSIGNAL / CHALLENGE",
     status: "中期榜第 3／10",
+    asOf: "2026-10-15",
     next: "準備後續提交，同時保留 DUA 與非最終排名邊界",
     tone: "review" as StatusTone,
   },

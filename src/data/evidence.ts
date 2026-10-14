@@ -22,6 +22,8 @@ export type EvidenceRecord = {
   source: string;
   image?: string;
   imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   links?: EvidenceLink[];
 };
 
@@ -40,6 +42,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "TerraSoft / MathWorks 頒發獎狀",
     image: "/evidence/matlab-expo-award.jpg",
     imageAlt: "2026 Taiwan MATLAB Expo 閃電演講優選獎狀，獲獎作品為決戰 ICU：VAP 深度學習預警儀表板。",
+    imageWidth: 652,
+    imageHeight: 931,
   },
   {
     id: "ai-university-bronze",
@@ -55,6 +59,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "AI UNIVERSITY 產學實習成果發表獎狀",
     image: "/evidence/ai-university-bronze.jpg",
     imageAlt: "AI UNIVERSITY 產學實習生計畫成果發表會銅獎獎狀。",
+    imageWidth: 1600,
+    imageHeight: 1161,
   },
   {
     id: "finebi-completion",
@@ -70,6 +76,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "FineBI 競賽完賽證書與 2026-09-30 更正成績通知",
     image: "/evidence/finebi-completion.jpg",
     imageAlt: "2026 FineBI x 台灣數據力大賞咕咕嘎嘎團隊蔡旻佑完賽證書。",
+    imageWidth: 1500,
+    imageHeight: 1070,
     links: [
       {
         label: "FineBI 公開報告",
@@ -95,6 +103,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "2026-10-03 決賽現場照片",
     image: "/evidence/swallow-eit-finals-onsite.jpg",
     imageAlt: "嚥域專案在第十屆全國醫學工程創意競賽決賽現場的展示紀錄。",
+    imageWidth: 1350,
+    imageHeight: 1800,
     links: [
       {
         label: "主辦競賽頁",
@@ -116,6 +126,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "AWS Academy completion certificate",
     image: "/evidence/aws-cloud-foundations.jpg",
     imageAlt: "Min-Yu Tsai 完成 AWS Academy Cloud Foundations 20 小時課程的證書。",
+    imageWidth: 964,
+    imageHeight: 770,
     links: [
       {
         label: "Credly 驗證頁",
@@ -137,6 +149,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "AWS Taiwan / DIGITIMES participation certificate",
     image: "/evidence/agent-for-truth-participation.jpg",
     imageAlt: "蔡旻佑參與 Agent for Truth Disinformation Defense Hackathon 的參與證明。",
+    imageWidth: 1200,
+    imageHeight: 900,
   },
   {
     id: "biopulse-a3d3-record",
@@ -191,6 +205,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/vap-early-warning-prototype-dashboard.png",
     imageAlt: "VAP 早期預警的公開合成研究儀表板。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "swallow-public-demo",
@@ -206,6 +222,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/swallow-eit-synthetic-prototype.png",
     imageAlt: "嚥域專案的合成 EIT 居家吞嚥回饋原型畫面。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "biopulse-public-demo",
@@ -221,6 +239,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/biopulse-public-engineering-demo.png",
     imageAlt: "BioPulse-SoC 模型到 FPGA 板端的公開工程交接視圖。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "yieldsentry-public-demo",
@@ -236,6 +256,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/yieldsentry-public-engineering-visual.png",
     imageAlt: "YieldSentry 半導體良率 Agent 的公開合成工作流。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "erp-ai-quote-public-demo",
@@ -251,6 +273,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/erp-ai-quote-public-demo.png",
     imageAlt: "ERP AI 智慧報價的文件到人工核對公開合成流程。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "tradepilot-public-demo",
@@ -266,6 +290,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public portfolio artifact",
     image: "/case-media/tradepilot-public-sandbox-demo.png",
     imageAlt: "TradePilot 延遲資料與風險教育導向的公開合成沙盒。",
+    imageWidth: 1440,
+    imageHeight: 900,
   },
   {
     id: "heteroguard-public-demo",
@@ -298,6 +324,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public project artifact / UCI MetroPT-3",
     image: "/evidence/triact-aiot-public-prototype.png",
     imageAlt: "TriAct AIoT 以公開代理資料建立的異常偵測與人工確認儀表板。",
+    imageWidth: 1440,
+    imageHeight: 1074,
   },
   {
     id: "ai-happiness-public-site",
@@ -313,6 +341,8 @@ export const evidenceRecords: EvidenceRecord[] = [
     source: "Public live site and original poster",
     image: "/evidence/ai-happiness-observatory-poster.svg",
     imageAlt: "AI 幸福觀察站公開倡議 A0 海報。",
+    imageWidth: 841,
+    imageHeight: 1189,
     links: [{ label: "開啟公開網站", href: "https://ai-happiness-survey.vercel.app/" }],
   },
 ];

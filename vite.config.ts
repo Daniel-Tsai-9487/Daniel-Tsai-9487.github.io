@@ -80,6 +80,7 @@ function renderHomePage(sourceHtml: string) {
     name: "蔡旻佑",
     alternateName: "Min-Yu Tsai",
     url: canonical,
+    email: `mailto:${siteConfig.email}`,
     sameAs: [
       "https://github.com/Daniel-Tsai-9487",
       "https://www.facebook.com/daniel.tsai.628090/",
@@ -134,6 +135,7 @@ function renderProfilePage(sourceHtml: string) {
     name: "蔡旻佑",
     alternateName: "Min-Yu Tsai",
     url: canonical,
+    email: `mailto:${siteConfig.email}`,
     sameAs: [
       "https://github.com/Daniel-Tsai-9487",
       "https://www.facebook.com/daniel.tsai.628090/",
@@ -150,12 +152,12 @@ function renderProfilePage(sourceHtml: string) {
   html = replaceMeta(html, "property", "og:type", "profile");
   html = replaceMeta(html, "property", "og:url", canonical);
   html = replaceMeta(html, "property", "og:image", socialImage);
-  html = replaceMeta(html, "property", "og:image:alt", "蔡旻佑公開專業概要的分享預覽圖");
+  html = replaceMeta(html, "property", "og:image:alt", "蔡旻佑一頁履歷與專業概要的分享預覽圖");
   html = replaceMeta(html, "name", "twitter:card", "summary_large_image");
   html = replaceMeta(html, "name", "twitter:title", siteConfig.profileTitle);
   html = replaceMeta(html, "name", "twitter:description", siteConfig.profileDescription);
   html = replaceMeta(html, "name", "twitter:image", socialImage);
-  html = replaceMeta(html, "name", "twitter:image:alt", "蔡旻佑公開專業概要的分享預覽圖");
+  html = replaceMeta(html, "name", "twitter:image:alt", "蔡旻佑一頁履歷與專業概要的分享預覽圖");
   return replaceStructuredData(html, structuredData);
 }
 
