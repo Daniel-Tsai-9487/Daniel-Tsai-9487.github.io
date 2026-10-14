@@ -2194,7 +2194,7 @@ function App() {
             <div className="recognition-proof-heading reveal">
               <div>
                 <p>PUBLIC PROOF PREVIEW</p>
-                <h3>獎狀與證明，直接在首頁看得到。</h3>
+                <h3>獎狀&amp;證明</h3>
               </div>
               <p>
                 目前公開 {publicProofPreviewRecords.length} 件可直接開啟的影像證明，其中 {publicAwardProofCount} 件為獎項證明；
