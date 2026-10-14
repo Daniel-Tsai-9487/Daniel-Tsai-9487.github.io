@@ -464,7 +464,7 @@
   border-color: #4c4d48;
   color: #f5f2ea;
   justify-content: space-between;
-  margin-top: 24px;
+  margin: 24px 5vw 0;
   padding: 21px 24px;
 }
 
@@ -728,20 +728,36 @@ section[id] {
 
 .brand-mark {
   align-items: center;
-  display: flex;
+  border: 1px solid transparent;
+  display: inline-flex;
   font-family: Impact, "Arial Black", "Portfolio Noto Sans TC", sans-serif;
-  font-size: 24px;
+  font-size: 27px;
   font-weight: 900;
-  gap: 5px;
+  gap: 7px;
   line-height: 1;
+  margin-left: -10px;
+  min-height: 48px;
+  min-width: 88px;
+  padding: 0 10px;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
 .brand-mark span:last-child {
   background: #d8f20b;
   color: #101112;
   font-family: Consolas, "Courier New", "Portfolio Noto Sans TC", monospace;
-  font-size: 13px;
-  padding: 3px 4px;
+  font-size: 14px;
+  padding: 4px 5px;
+}
+
+.brand-mark:hover,
+.brand-mark:focus-visible {
+  background: rgba(216, 242, 11, 0.1);
+  border-color: rgba(216, 242, 11, 0.6);
+}
+
+.brand-mark:active {
+  transform: translateY(1px);
 }
 
 .main-nav {
@@ -2463,6 +2479,144 @@ section[id] {
   color: #101112;
 }
 
+.recognition-proof-panel {
+  border-top: 2px solid #101112;
+  margin: 46px 5vw 0;
+  padding-top: 27px;
+  scroll-margin-top: 82px;
+}
+
+.recognition-proof-heading {
+  align-items: end;
+  display: grid;
+  gap: 30px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+}
+
+.recognition-proof-heading > div > p {
+  color: #4d4f19;
+  font-family: Consolas, "Courier New", "Portfolio Noto Sans TC", monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.recognition-proof-heading h3 {
+  font-family: Impact, "Arial Black", "Portfolio Noto Sans TC", sans-serif;
+  font-size: clamp(30px, 3.4vw, 52px);
+  line-height: 1.05;
+  margin-top: 10px;
+}
+
+.recognition-proof-heading > p {
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.recognition-proof-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 27px;
+}
+
+.recognition-proof-card {
+  background: #f5f2ea;
+  border: 1px solid #101112;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.recognition-proof-card:hover,
+.recognition-proof-card:focus-visible {
+  box-shadow: 7px 7px 0 #101112;
+  transform: translate(-3px, -3px);
+}
+
+.recognition-proof-media {
+  align-items: center;
+  aspect-ratio: 3 / 2;
+  background: #e4e2da;
+  border-bottom: 1px solid #101112;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.recognition-proof-media img {
+  height: 100%;
+  object-fit: contain;
+  transition: transform 220ms ease;
+  width: 100%;
+}
+
+.recognition-proof-card:hover .recognition-proof-media img,
+.recognition-proof-card:focus-visible .recognition-proof-media img {
+  transform: scale(1.025);
+}
+
+.recognition-proof-media > span {
+  align-items: center;
+  background: #101112;
+  bottom: 0;
+  color: #f5f2ea;
+  display: flex;
+  font-family: Consolas, "Courier New", "Portfolio Noto Sans TC", monospace;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 6px;
+  letter-spacing: 0.05em;
+  padding: 8px 10px;
+  position: absolute;
+  right: 0;
+}
+
+.recognition-proof-copy {
+  display: grid;
+  gap: 8px;
+  padding: 17px 18px 20px;
+}
+
+.recognition-proof-copy > span {
+  color: #641e11;
+  font-family: Consolas, "Courier New", "Portfolio Noto Sans TC", monospace;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.recognition-proof-copy strong {
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.recognition-proof-restricted {
+  align-items: flex-start;
+  border: 1px solid rgba(16, 17, 18, 0.6);
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px 20px;
+}
+
+.recognition-proof-restricted svg {
+  flex: 0 0 auto;
+}
+
+.recognition-proof-restricted strong {
+  font-size: 16px;
+}
+
+.recognition-proof-restricted p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin-top: 4px;
+}
+
 .capabilities-section {
   background: #f5f2ea;
 }
@@ -3436,20 +3590,36 @@ section[id] {
 
 .detail-brand {
   align-items: center;
-  display: flex;
+  border: 1px solid transparent;
+  display: inline-flex;
   font-family: Impact, "Arial Black", "Portfolio Noto Sans TC", sans-serif;
-  font-size: 24px;
+  font-size: 27px;
   font-weight: 900;
-  gap: 5px;
+  gap: 7px;
   line-height: 1;
+  margin-left: -10px;
+  min-height: 48px;
+  min-width: 88px;
+  padding: 0 10px;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
 .detail-brand span:last-child {
   background: #d8f20b;
   color: #101112;
   font-family: Consolas, "Courier New", "Portfolio Noto Sans TC", monospace;
-  font-size: 13px;
-  padding: 3px 4px;
+  font-size: 14px;
+  padding: 4px 5px;
+}
+
+.detail-brand:hover,
+.detail-brand:focus-visible {
+  background: rgba(216, 242, 11, 0.1);
+  border-color: rgba(216, 242, 11, 0.6);
+}
+
+.detail-brand:active {
+  transform: translateY(1px);
 }
 
 .detail-topbar > p,
@@ -4906,6 +5076,13 @@ section[id] {
   .skip-link {
     transition: none;
   }
+
+  .brand-mark,
+  .detail-brand,
+  .recognition-proof-card,
+  .recognition-proof-media img {
+    transition: none;
+  }
 }
 
 @media (max-width: 1120px) {
@@ -5318,6 +5495,15 @@ section[id] {
   .case-quick-read-item:nth-child(4) {
     border-left: 1px solid #4c4d48;
     padding-left: 20px;
+  }
+
+  .recognition-proof-heading {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .recognition-proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -6169,6 +6355,18 @@ section[id] {
   .recognition-row .status-pill {
     align-self: center;
     max-width: 150px;
+  }
+
+  .recognition-proof-panel {
+    margin-top: 36px;
+  }
+
+  .recognition-proof-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recognition-proof-restricted {
+    padding: 16px;
   }
 
   .capability-grid {

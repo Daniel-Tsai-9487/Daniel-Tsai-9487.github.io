@@ -378,6 +378,21 @@ const recognitionNotes = [
   { year: "2026", title: "全國醫學工程創意競賽", status: "嚥域入圍決賽 / 現場展示完成", tone: "review" as StatusTone },
 ];
 
+const evidenceKindLabels: Record<EvidenceRecord["kind"], string> = {
+  AWARD: "獎項證明",
+  CREDENTIAL: "課程證書",
+  DEMO: "公開 Demo",
+  FINALIST: "決賽紀錄",
+  PARTICIPATION: "參與／完賽",
+  STATUS: "狀態紀錄",
+};
+
+const publicProofPreviewRecords = publicProofRecords.filter(
+  (record): record is EvidenceRecord & { image: string } => Boolean(record.image),
+);
+
+const publicAwardProofCount = publicProofPreviewRecords.filter((record) => record.kind === "AWARD").length;
+
 function StatusPill({ tone, children }: StatusPillProps) {
   return (
     <span className={`status-pill status-${tone}`}>
@@ -1532,7 +1547,7 @@ function EvidencePage() {
           <span>MY</span>
           <span>01</span>
         </a>
-        <p>PROOF &amp; DEMO INDEX / 2026-10-14</p>
+        <p>PROOF &amp; DEMO INDEX / 2026-10-15</p>
         <a className="detail-back" href="/#recognition" aria-label="返回認可與節點">
           <ArrowLeft size={18} /> <span>返回作品集</span>
         </a>
@@ -1551,7 +1566,7 @@ function EvidencePage() {
           </div>
           <aside className="evidence-summary-board" aria-label="證明索引摘要">
             <span>UPDATED</span>
-            <strong>2026<br />10.14</strong>
+            <strong>2026<br />10.15</strong>
             <dl>
               <div><dt>PUBLIC PROOF</dt><dd>{String(publicProofRecords.length).padStart(2, "0")}</dd></div>
               <div><dt>PUBLIC DEMO</dt><dd>{String(publicDemoRecords.length).padStart(2, "0")}</dd></div>
@@ -2174,6 +2189,53 @@ function App() {
                 <StatusPill tone={note.tone}>{note.status}</StatusPill>
               </article>
             ))}
+          </div>
+          <div className="recognition-proof-panel" id="public-proof-preview">
+            <div className="recognition-proof-heading reveal">
+              <div>
+                <p>PUBLIC PROOF PREVIEW</p>
+                <h3>獎狀與證明，直接在首頁看得到。</h3>
+              </div>
+              <p>
+                目前公開 {publicProofPreviewRecords.length} 件可直接開啟的影像證明，其中 {publicAwardProofCount} 件為獎項證明；
+                其餘依課程證書、參與／完賽與決賽紀錄分開標示。
+              </p>
+            </div>
+            <div className="recognition-proof-grid" aria-label="公開獎狀與證明預覽">
+              {publicProofPreviewRecords.map((record) => (
+                <a
+                  className="recognition-proof-card reveal"
+                  href={record.image}
+                  key={record.id}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  aria-label={`開啟 ${record.title} 原圖`}
+                >
+                  <span className="recognition-proof-media">
+                    <img
+                      alt={record.imageAlt ?? ""}
+                      decoding="async"
+                      height={640}
+                      loading="lazy"
+                      src={record.image}
+                      width={960}
+                    />
+                    <span>OPEN ORIGINAL <Maximize2 size={15} aria-hidden="true" /></span>
+                  </span>
+                  <span className="recognition-proof-copy">
+                    <span>{evidenceKindLabels[record.kind]} / {record.date}</span>
+                    <strong>{record.title}</strong>
+                  </span>
+                </a>
+              ))}
+            </div>
+            <div className="recognition-proof-restricted reveal">
+              <BadgeCheck size={24} aria-hidden="true" />
+              <div>
+                <strong>另有 3 件獲獎紀錄保留在完整索引</strong>
+                <p>A3D3 與 NightOwl 原始資料含第三方資訊；YieldSentry 尚未找到可公開的正式獎狀或主辦公告，因此不把文字紀錄偽裝成公開獎狀。</p>
+              </div>
+            </div>
           </div>
           <a className="recognition-evidence-link reveal" href={evidencePath()}>
             <span><BadgeCheck size={22} aria-hidden="true" /><strong>開啟公開證明與 Demo 索引</strong></span>
