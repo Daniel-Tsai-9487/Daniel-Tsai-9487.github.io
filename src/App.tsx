@@ -442,11 +442,7 @@ const publicAwardProofCount = publicProofPreviewRecords.filter((record) => recor
 const recordOnlyAwardCount = [...publicProofRecords, ...restrictedEvidenceRecords]
   .filter((record) => record.kind === "AWARD" && !record.image)
   .length;
-const evidenceLatestAsOf = [...publicProofRecords, ...publicDemoRecords, ...restrictedEvidenceRecords]
-  .map((record) => record.date)
-  .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
-  .sort()
-  .reverse()[0] ?? "2026-10-15";
+const evidenceIndexUpdatedAt = "2026-10-24";
 
 function evidenceMediaOrientation(record: EvidenceRecord) {
   if (!record.imageHeight || !record.imageWidth) return "";
@@ -1864,7 +1860,7 @@ function EvidencePage() {
           <span>MY</span>
           <span>01</span>
         </a>
-        <p>PROOF &amp; DEMO INDEX / {evidenceLatestAsOf}</p>
+        <p>PROOF &amp; DEMO INDEX / {evidenceIndexUpdatedAt}</p>
         <a className="detail-back" href="/#recognition" aria-label="返回認可與節點">
           <ArrowLeft size={18} /> <span>返回作品集</span>
         </a>
@@ -1883,7 +1879,7 @@ function EvidencePage() {
           </div>
           <aside className="evidence-summary-board" aria-label="證明索引摘要">
             <span>UPDATED</span>
-            <strong>{evidenceLatestAsOf.slice(0, 4)}<br />{evidenceLatestAsOf.slice(5).replace("-", ".")}</strong>
+            <strong>{evidenceIndexUpdatedAt.slice(0, 4)}<br />{evidenceIndexUpdatedAt.slice(5).replace("-", ".")}</strong>
             <dl>
               <div><dt>PUBLIC PROOF</dt><dd>{String(publicProofRecords.length).padStart(2, "0")}</dd></div>
               <div><dt>PUBLIC DEMO</dt><dd>{String(publicDemoRecords.length).padStart(2, "0")}</dd></div>
