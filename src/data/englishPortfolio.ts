@@ -14,7 +14,7 @@ export const englishCaseSummaries: Record<FlagshipProjectId, EnglishCaseSummary>
     category: "BIOMEDICAL ML / RESEARCH",
     role: "First author: data preparation, model comparison, calibration, and research materials",
     summary: "A time-series research workflow for ventilator-associated pneumonia early-warning signals, designed around patient-level evaluation, probability calibration, and interpretable outputs.",
-    outcome: "ICBEI 2026 abstract accepted. The public case intentionally excludes controlled clinical data and diagnostic claims.",
+    outcome: "ICBEI 2026 abstract accepted and scheduled as Poster D3-08 on October 31, 2026. The presentation has not yet occurred; controlled clinical data and diagnostic claims remain excluded.",
   },
   "swallow-eit": {
     title: "Swallowing EIT Concept",
@@ -50,5 +50,12 @@ export const englishCaseSummaries: Record<FlagshipProjectId, EnglishCaseSummary>
     role: "Requirements and integration lead in a two-person team",
     summary: "An independent fintech prototype that brings delayed market context, historical simulation, and risk education into one research-oriented experience without live trading.",
     outcome: "Completed as an independent prototype rather than a submitted competition entry. It does not provide investment advice, brokerage access, or performance promises.",
+  },
+  "heteroguard-edge": {
+    title: "HeteroGuard Edge",
+    category: "SAFETY ENGINEERING / EDGE",
+    role: "Lead for the contract-first safety core and public technical delivery within a four-person team",
+    summary: "A reproducible contract-first safety core for electronic prototype assembly, built around JSON Schema, strict parsing, provenance, state transitions, and a seven-case deterministic synthetic replay.",
+    outcome: "The submission was received on October 13, 2026. The public repository and video are SYNTHETIC / NOT E2E; cameras, models, MCU, FPGA, UGen300, real-time integration, and formal performance metrics are not claimed.",
   },
 };

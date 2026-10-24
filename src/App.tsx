@@ -34,14 +34,16 @@ import {
   achievements,
   currentThreads,
   laneLabels,
+  nowUpdates,
   portfolioProjects,
+  resumeHighlights,
   storyBeats,
   type PortfolioProject,
   type ProjectLane,
   type StatusTone,
 } from "./data/portfolio";
 import { publicCharacterArtwork } from "./data/characterArtwork";
-import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, type CaseStudy } from "./data/caseStudies";
+import { flagshipProjectIds, getCaseStudy, hasPublicMediaAsset, homeFeaturedProjectIds, type CaseStudy } from "./data/caseStudies";
 import { englishCaseSummaries } from "./data/englishPortfolio";
 import {
   publicDemoRecords,
@@ -49,7 +51,7 @@ import {
   restrictedEvidenceRecords,
   type EvidenceRecord,
 } from "./data/evidence";
-import { englishPath, evidencePath, profilePath, projectPath, siteConfig } from "./site";
+import { englishPath, evidencePath, nowPath, profilePath, projectPath, siteConfig } from "./site";
 
 type ArchiveLaneFilter = Exclude<ProjectLane, "featured">;
 type ArchiveFilter = ArchiveLaneFilter | "all" | "case-study" | "award" | "coursework";
@@ -63,6 +65,7 @@ type PageRoute =
   | { kind: "home" }
   | { kind: "profile" }
   | { kind: "evidence" }
+  | { kind: "now" }
   | { kind: "english" }
   | { kind: "project"; projectId: string };
 
@@ -84,7 +87,7 @@ const localCharacterBackdropAssets: Record<LocalCharacterPlacement, LocalCharact
 const defaultArchiveFilter: ArchiveFilter = "case-study";
 const archiveLaneFilters: Array<ArchiveLaneFilter | "all"> = ["all", "research", "proposal", "academic", "tool", "creative"];
 const archiveQuickFilters: Array<{ id: Extract<ArchiveFilter, "case-study" | "award" | "coursework">; label: string; eyebrow: string }> = [
-  { id: "case-study", label: "完整 Case Study", eyebrow: "六件可深入閱讀的旗艦案例，含公開素材、佐證與範圍說明" },
+  { id: "case-study", label: "完整 Case Study", eyebrow: "七件可深入閱讀的旗艦案例，含公開素材、佐證與範圍說明" },
   { id: "award", label: "獲獎", eyebrow: "保留已明確列示獎項的作品，不把入圍、審查或原型混為獲獎" },
   { id: "coursework", label: "課程實作", eyebrow: "控制、半導體、訊號與軟硬整合的課程型實作紀錄" },
 ];
@@ -104,6 +107,10 @@ const orderedPortfolioProjects = [...portfolioProjects].sort(
 );
 const portfolioProjectById = new Map(portfolioProjects.map((project) => [project.id, project] as const));
 const flagshipProjects = flagshipProjectIds.flatMap((projectId) => {
+  const project = portfolioProjectById.get(projectId);
+  return project ? [project] : [];
+});
+const homeFeaturedProjects = homeFeaturedProjectIds.flatMap((projectId) => {
   const project = portfolioProjectById.get(projectId);
   return project ? [project] : [];
 });
@@ -246,12 +253,17 @@ function isEvidencePath(pathname: string) {
   return /^\/evidence(?:\/|\/index\.html)?$/.test(pathname);
 }
 
+function isNowPath(pathname: string) {
+  return /^\/now(?:\/|\/index\.html)?$/.test(pathname);
+}
+
 function usePageRoute() {
   const readPageRoute = (): PageRoute => {
     const pathProjectId = parseProjectPath(window.location.pathname);
     if (pathProjectId) return { kind: "project", projectId: pathProjectId };
     if (isProfilePath(window.location.pathname)) return { kind: "profile" };
     if (isEvidencePath(window.location.pathname)) return { kind: "evidence" };
+    if (isNowPath(window.location.pathname)) return { kind: "now" };
     if (isEnglishPath(window.location.pathname)) return { kind: "english" };
 
     const legacyProjectId = parseProjectHash(window.location.hash);
@@ -274,6 +286,11 @@ function usePageRoute() {
 
       if (isEvidencePath(window.location.pathname)) {
         setRoute({ kind: "evidence" });
+        return;
+      }
+
+      if (isNowPath(window.location.pathname)) {
+        setRoute({ kind: "now" });
         return;
       }
 
@@ -398,12 +415,13 @@ const capabilityModules = [
 ];
 
 const recognitionNotes = [
+  { year: "2026", title: "國際生物醫藥菁英賽公開組", status: "Gold Champion / 結果通知已確認", tone: "award" as StatusTone },
   { year: "2026", title: "Taiwan MATLAB Expo", status: "優選", tone: "award" as StatusTone },
   { year: "2026", title: "AI UNIVERSITY 產學實習成果發表", status: "銅獎", tone: "award" as StatusTone },
   { year: "2026", title: "智創未來生成式 AI 創意設計競賽", status: "NightOwl ICU 佳作", tone: "award" as StatusTone },
   { year: "2026", title: "欣銓半導體書院 AI Agent 實作競賽", status: "YieldSentry 佳作", tone: "award" as StatusTone },
   { year: "2026", title: "FPGA 智慧運算與終端節點創意應用競賽", status: "A3D3 Track 優選獎 / AMD Track 入圍決賽", tone: "award" as StatusTone },
-  { year: "2026", title: "ICBEI 2026", status: "VAP 研究摘要接受 / 待發表", tone: "accepted" as StatusTone },
+  { year: "2026", title: "ICBEI 2026", status: "VAP 摘要接受 / Poster D3-08 排定 10/31", tone: "accepted" as StatusTone },
   { year: "2026", title: "全國醫學工程創意競賽", status: "嚥域入圍決賽 / 現場展示完成", tone: "review" as StatusTone },
 ];
 
@@ -421,6 +439,21 @@ const publicProofPreviewRecords = publicProofRecords.filter(
 );
 
 const publicAwardProofCount = publicProofPreviewRecords.filter((record) => record.kind === "AWARD").length;
+const recordOnlyAwardCount = [...publicProofRecords, ...restrictedEvidenceRecords]
+  .filter((record) => record.kind === "AWARD" && !record.image)
+  .length;
+const evidenceLatestAsOf = [...publicProofRecords, ...publicDemoRecords, ...restrictedEvidenceRecords]
+  .map((record) => record.date)
+  .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+  .sort()
+  .reverse()[0] ?? "2026-10-15";
+
+function evidenceMediaOrientation(record: EvidenceRecord) {
+  if (!record.imageHeight || !record.imageWidth) return "";
+  if (record.imageHeight > record.imageWidth) return " is-portrait";
+  if (record.imageWidth > record.imageHeight) return " is-landscape";
+  return " is-square";
+}
 
 function StatusPill({ tone, children }: StatusPillProps) {
   return (
@@ -535,6 +568,7 @@ function SystemMap() {
       </ol>
       <div className="system-map-footer">
         <span><span className="signal-dot" /> 最近更新至 {formatAsOfDate(latestAsOf)}；狀態與公開範圍以各案頁面為準</span>
+        <a href={nowPath()}>開啟完整 /now 紀錄 <ArrowUpRight size={17} aria-hidden="true" /></a>
       </div>
     </section>
   );
@@ -564,14 +598,14 @@ function RecognitionSection() {
         <div className="recognition-proof-heading reveal">
           <div>
             <p>PUBLIC PROOF PREVIEW</p>
-            <h3>可直接開啟的證明</h3>
+            <h3>可直接開啟的影像證明</h3>
           </div>
           <p>
             目前公開 {publicProofPreviewRecords.length} 件可直接開啟的影像證明，其中 {publicAwardProofCount} 件為獎項證明；
             其餘依課程證書、參與／完賽與決賽紀錄分開標示。
           </p>
         </div>
-        <div className="recognition-proof-grid" aria-label="公開獎狀與證明預覽">
+        <div className="recognition-proof-grid">
           {publicProofPreviewRecords.map((record) => (
             <a
               className="recognition-proof-card reveal"
@@ -579,9 +613,9 @@ function RecognitionSection() {
               key={record.id}
               rel="noopener noreferrer"
               target="_blank"
-              aria-label={`開啟 ${record.title} 原圖`}
+              aria-label={`開啟 ${record.title} 原圖（另開新視窗）`}
             >
-              <span className="recognition-proof-media">
+              <span className={`recognition-proof-media${evidenceMediaOrientation(record)}`}>
                 <img
                   alt={record.imageAlt ?? ""}
                   decoding="async"
@@ -593,7 +627,7 @@ function RecognitionSection() {
                 <span>OPEN ORIGINAL <Maximize2 size={15} aria-hidden="true" /></span>
               </span>
               <span className="recognition-proof-copy">
-                <span>{evidenceKindLabels[record.kind]} / {record.date}</span>
+                <span>{record.eyebrow}<br />{evidenceKindLabels[record.kind]} / {record.date}</span>
                 <strong>{record.title}</strong>
               </span>
             </a>
@@ -602,8 +636,8 @@ function RecognitionSection() {
         <div className="recognition-proof-restricted reveal">
           <BadgeCheck size={24} aria-hidden="true" />
           <div>
-            <strong>另有 3 件獲獎紀錄保留在完整索引</strong>
-            <p>A3D3 與 NightOwl 原始資料含第三方資訊；YieldSentry 尚未找到可公開的正式獎狀或主辦公告，因此不把文字紀錄偽裝成公開獎狀。</p>
+            <strong>影像證明之外，另有 {recordOnlyAwardCount} 件獲獎結果以文字或官方連結呈現</strong>
+            <p>嚥域、NightOwl 與 BioPulse AMD Track 的正式證明已依團隊共同同意公開。A3D3 原通知含主辦人聯絡資料而保留；Gold Champion 已列官方個人通知與主辦結果頁、正式電子獎狀仍待核發；YieldSentry 尚未定位獎狀原件。</p>
           </div>
         </div>
       </div>
@@ -697,7 +731,7 @@ function CaseStudyMediaGateway({
       </div>
       <dl className="case-media-gateway-meta" aria-label="案例媒體入口摘要">
         <div><dt>ACTIVE FILE</dt><dd>{project.sequence}</dd></div>
-        <div><dt>PUBLIC VIEWS</dt><dd>{mediaCount.toString().padStart(2, "0")}</dd></div>
+        <div><dt>CASE VIEWS</dt><dd>{mediaCount.toString().padStart(2, "0")}</dd></div>
         <div><dt>ENTRY</dt><dd>MEDIA / EVIDENCE</dd></div>
       </dl>
     </section>
@@ -731,7 +765,7 @@ function ProjectArchive({
         <p className="section-index">05 / COMPLETE ARCHIVE</p>
         <div>
           <h2 id="archive-heading">作品檔案庫</h2>
-          <p>預設先顯示六件完整案例；需要時再用「全部作品」或分類篩選展開 38 件檔案。</p>
+          <p>預設先顯示七件完整案例；需要時再用「全部作品」或分類篩選展開 38 件檔案。</p>
         </div>
         <p className="archive-count" aria-atomic="true" aria-live="polite">{visibleProjects.length.toString().padStart(2, "0")} / {portfolioProjects.length.toString().padStart(2, "0")} FILES<br />{activeFilter.label}</p>
       </div>
@@ -1278,9 +1312,14 @@ function CaseStudyInspectionGrid({ caseStudy }: { caseStudy: CaseStudy }) {
   const repositoryRestriction = caseStudy.links.find(
     (link) => link.availability === "RESTRICTED" && /source|material|access|repository|原始碼|素材/i.test(`${link.label} ${link.title} ${link.detail}`),
   );
-  const publicDemo = caseStudy.media.find(hasPublicMediaAsset);
+  const publicDemoMedia = caseStudy.media.find(hasPublicMediaAsset);
+  const publicDemoLink = caseStudy.links.find(
+    (link) => link.availability === "PUBLIC" && /demo|video|prototype|live site|展示|影片/i.test(`${link.label} ${link.title}`),
+  );
   const publicBenchmark = caseStudy.evidence.find(
-    (item) => item.availability === "PUBLIC" && /benchmark|auroc|auprc|accuracy|f1 score|latency|fps|效能指標|模型分數/i.test(`${item.label} ${item.value}`),
+    (item) => item.availability === "PUBLIC"
+      && /benchmark|auroc|auprc|accuracy|f1 score|latency|fps|效能指標|模型分數/i.test(`${item.label} ${item.value}`)
+      && !/not[_\s-]?evaluated|未評估/i.test(`${item.value} ${item.detail}`),
   );
   const items: CaseInspectionItem[] = [
     publicRepository
@@ -1291,15 +1330,23 @@ function CaseStudyInspectionGrid({ caseStudy }: { caseStudy: CaseStudy }) {
           title: "未提供公開 Repository",
           detail: repositoryRestriction?.detail ?? "原始碼與工作檔尚未整理為可公開、可長期維護的版本。",
         },
-    publicDemo
+    publicDemoMedia
       ? {
           label: "Demo",
           status: "PUBLIC",
-          title: publicDemo.title,
+          title: publicDemoMedia.title,
           detail: "本站提供可直接開啟的公開案例切面。",
           href: `#media-${caseStudy.projectId}`,
         }
-      : { label: "Demo", status: "NOT PUBLIC", title: "未提供公開 Demo", detail: "目前案例只有文字紀錄，沒有可公開的展示內容。" },
+      : publicDemoLink
+        ? {
+            label: "Demo",
+            status: "PUBLIC",
+            title: publicDemoLink.title,
+            detail: publicDemoLink.detail,
+            href: publicDemoLink.href,
+          }
+        : { label: "Demo", status: "NOT PUBLIC", title: "未提供公開 Demo", detail: "目前案例只有文字紀錄，沒有可公開的展示內容。" },
     {
       label: "架構",
       status: "PUBLIC",
@@ -1358,6 +1405,46 @@ function CaseStudyInspectionGrid({ caseStudy }: { caseStudy: CaseStudy }) {
             <article className="case-inspection-item" key={item.label}>{content}</article>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+function CaseStudyReproduction({ caseStudy }: { caseStudy: CaseStudy }) {
+  if (!caseStudy.reproduction) return null;
+
+  return (
+    <section className="case-reproduction" aria-labelledby={`case-reproduction-${caseStudy.projectId}`}>
+      <div className="case-study-section-heading">
+        <p>03B / REPRODUCE</p>
+        <div>
+          <h3 id={`case-reproduction-${caseStudy.projectId}`}>從公開 repository 重播同一條判定路徑</h3>
+          <p>指令、預期輸出與未涵蓋範圍放在一起，讓「可重現」不只是一個標籤。</p>
+        </div>
+      </div>
+      <div className="case-reproduction-grid">
+        <article>
+          <span>ENVIRONMENT</span>
+          <p>{caseStudy.reproduction.environment}</p>
+        </article>
+        <article className="case-reproduction-commands">
+          <span>COMMANDS</span>
+          <ol>
+            {caseStudy.reproduction.commands.map((command) => (
+              <li key={command}><code>{command}</code></li>
+            ))}
+          </ol>
+        </article>
+        <article>
+          <span>EXPECTED</span>
+          <ul>
+            {caseStudy.reproduction.expected.map((result) => <li key={result}>{result}</li>)}
+          </ul>
+        </article>
+        <article className="case-reproduction-boundary">
+          <span>BOUNDARY</span>
+          <p>{caseStudy.reproduction.boundary}</p>
+        </article>
       </div>
     </section>
   );
@@ -1429,6 +1516,8 @@ function FlagshipCaseStudy({
       <CaseStudyInspectionGrid caseStudy={caseStudy} />
 
       <CaseStudyEvidenceIndex caseStudy={caseStudy} localCharacterPreview={localCharacterPreview} />
+
+      <CaseStudyReproduction caseStudy={caseStudy} />
 
       <section className="case-study-chapters" aria-labelledby={`case-chapters-${caseStudy.projectId}`}>
         <div className="case-study-section-heading">
@@ -1633,7 +1722,7 @@ function ProjectDetailPage({
 }
 
 function EvidenceCard({ record }: { record: EvidenceRecord }) {
-  const project = portfolioProjectById.get(record.projectId);
+  const project = record.projectId ? portfolioProjectById.get(record.projectId) : undefined;
 
   return (
     <article className={`evidence-card evidence-card-${record.availability.toLowerCase()}`}>
@@ -1644,11 +1733,11 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
 
       {record.image ? (
         <a
-          className={`evidence-card-media${record.imageHeight && record.imageWidth && record.imageHeight > record.imageWidth ? " is-portrait" : ""}`}
+          className={`evidence-card-media${evidenceMediaOrientation(record)}`}
           href={record.image}
           rel="noopener noreferrer"
           target="_blank"
-          aria-label={`開啟 ${record.title} 原圖`}
+          aria-label={`開啟 ${record.title} 原圖（另開新視窗）`}
         >
           <img
             alt={record.imageAlt ?? ""}
@@ -1661,19 +1750,19 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
           <span>OPEN ORIGINAL <Maximize2 size={16} aria-hidden="true" /></span>
         </a>
       ) : record.availability === "RESTRICTED" ? (
-        <div className="evidence-card-withheld" aria-label="原始證明未公開">
+        <div className="evidence-card-withheld" role="group" aria-label="原始證明未公開">
           <BadgeCheck size={28} aria-hidden="true" />
           <div>
-            <strong>RECORD CHECKED</strong>
-            <span>原始文件因第三方個資或公開授權邊界未上傳</span>
+            <strong>ORIGINAL NOT PUBLIC</strong>
+            <span>原件可能尚未核發、尚未定位或仍有資料邊界；原因見下方說明。</span>
           </div>
         </div>
       ) : (
-        <div className="evidence-card-linked" aria-label="公開連結型證據">
+        <div className="evidence-card-linked" role="group" aria-label="公開連結型證據">
           <Link2 size={28} aria-hidden="true" />
           <div>
             <strong>PUBLIC LINKS AVAILABLE</strong>
-            <span>此項以公開 repository、影片或網站連結呈現；請使用卡片下方入口。</span>
+            <span>此項以主辦頁、公開 repository、影片或網站連結呈現；請使用卡片下方入口。</span>
           </div>
         </div>
       )}
@@ -1692,18 +1781,20 @@ function EvidenceCard({ record }: { record: EvidenceRecord }) {
         <small>SOURCE / {record.source}</small>
       </div>
 
-      <div className="evidence-card-actions">
-        {project && (
-          <a href={projectPath(project.id)}>
-            對應專案 <ArrowUpRight size={16} aria-hidden="true" />
-          </a>
-        )}
-        {record.links?.map((link) => (
-          <a href={link.href} key={link.href} rel="noopener noreferrer" target="_blank">
-            {link.label} <ExternalLink size={15} aria-hidden="true" />
-          </a>
-        ))}
-      </div>
+      {project || record.links?.length ? (
+        <div className="evidence-card-actions">
+          {project && (
+            <a href={projectPath(project.id)}>
+              對應專案 <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          )}
+          {record.links?.map((link) => (
+            <a href={link.href} key={link.href} rel="noopener noreferrer" target="_blank">
+              {link.label} <ExternalLink size={15} aria-hidden="true" />
+            </a>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -1773,7 +1864,7 @@ function EvidencePage() {
           <span>MY</span>
           <span>01</span>
         </a>
-        <p>PROOF &amp; DEMO INDEX / 2026-10-15</p>
+        <p>PROOF &amp; DEMO INDEX / {evidenceLatestAsOf}</p>
         <a className="detail-back" href="/#recognition" aria-label="返回認可與節點">
           <ArrowLeft size={18} /> <span>返回作品集</span>
         </a>
@@ -1792,7 +1883,7 @@ function EvidencePage() {
           </div>
           <aside className="evidence-summary-board" aria-label="證明索引摘要">
             <span>UPDATED</span>
-            <strong>2026<br />10.15</strong>
+            <strong>{evidenceLatestAsOf.slice(0, 4)}<br />{evidenceLatestAsOf.slice(5).replace("-", ".")}</strong>
             <dl>
               <div><dt>PUBLIC PROOF</dt><dd>{String(publicProofRecords.length).padStart(2, "0")}</dd></div>
               <div><dt>PUBLIC DEMO</dt><dd>{String(publicDemoRecords.length).padStart(2, "0")}</dd></div>
@@ -1810,7 +1901,7 @@ function EvidencePage() {
             <div><dt>AWARD</dt><dd>獎狀或已核對的主辦結果紀錄。</dd></div>
             <div><dt>PARTICIPATION / FINALIST</dt><dd>只證明參與、完賽或決賽現場，不自動代表獲獎。</dd></div>
             <div><dt>DEMO</dt><dd>證明公開介面或工程表述存在，不替代真實部署、E2E 或臨床驗證。</dd></div>
-            <div><dt>RESTRICTED</dt><dd>紀錄已核對，但原件含第三方個資、合作資訊或尚未取得公開授權。</dd></div>
+            <div><dt>RESTRICTED</dt><dd>保留成果狀態，但原件尚未核發、尚未定位，或仍有不能公開的資料邊界。</dd></div>
           </dl>
         </section>
 
@@ -1818,7 +1909,7 @@ function EvidencePage() {
           eyebrow="01 / PUBLIC PROOF"
           heading="可直接開啟的證明"
           id="public-proof"
-          introduction="公開檔案只保留本人資料或無個資的團隊證明；每張卡都列出不能延伸的主張。"
+          introduction="本人證明與已取得團隊共同同意的正式原件均可直接查看；Gold Champion 等連結型紀錄則提供官方入口。每張卡都列出不能延伸的主張。"
           records={publicProofRecords}
         />
         <EvidenceCollection
@@ -1832,7 +1923,7 @@ function EvidencePage() {
           eyebrow="03 / RESTRICTED RECORD"
           heading="已核對、但不公開原件"
           id="restricted-record"
-          introduction="第三方姓名、主辦寄件者資料、合作資訊或正式文件授權不明時，網站只列狀態與限制。"
+          introduction="原件尚未核發、尚未定位，或仍含不能公開的合作資訊時，網站只列可支持的狀態與具體原因。"
           records={restrictedEvidenceRecords}
         />
 
@@ -1843,6 +1934,113 @@ function EvidencePage() {
             <p>證明頁只回答「這項紀錄能證明什麼」；研究問題、本人角色、方法與公開範圍仍以各專案頁為準。</p>
           </div>
           <a href="/#archive">瀏覽全部專案 <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </section>
+      </main>
+    </m.div>
+  );
+}
+
+function NowPage() {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const latestUpdateDate = nowUpdates[0]?.date ?? "2026-10-24";
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      headingRef.current?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <m.div
+      animate={{ opacity: 1, y: 0 }}
+      className="now-page"
+      exit={{ opacity: 0, y: -18 }}
+      initial={{ opacity: 0, y: 18 }}
+      transition={{ duration: 0.34, ease: "easeOut" }}
+    >
+      <a
+        className="skip-link"
+        href="#now-main"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("now-main")?.focus();
+        }}
+      >
+        跳至最近更新
+      </a>
+      <header className="detail-topbar">
+        <a className="detail-brand" href="/" aria-label="回到網站首頁">
+          <span>MY</span>
+          <span>01</span>
+        </a>
+        <p>NOW / DATED PUBLIC LOG</p>
+        <a className="detail-back" href="/#current-work" aria-label="返回首頁最近更新摘要">
+          <ArrowLeft size={18} /> <span>返回作品集</span>
+        </a>
+      </header>
+
+      <main className="now-page-main" id="now-main" tabIndex={-1}>
+        <section className="now-hero" aria-labelledby="now-heading">
+          <div>
+            <p className="detail-kicker">CURRENT WORK / EVIDENCE-AWARE UPDATES</p>
+            <h1 id="now-heading" ref={headingRef} tabIndex={-1}>最近完成什麼，<br />下一步又在哪裡。</h1>
+            <p>這不是動態消息牆，而是一份可追溯的工作紀錄。每筆更新都保留日期、證據來源與不能被延伸的主張，讓進行中、已收件、已排程與正式結果不會混在一起。</p>
+          </div>
+          <dl className="now-hero-facts">
+            <div><dt>LATEST AS OF</dt><dd>{formatAsOfDate(latestUpdateDate)}</dd></div>
+            <div><dt>DATED UPDATES</dt><dd>{String(nowUpdates.length).padStart(2, "0")}</dd></div>
+            <div><dt>RULE</dt><dd>STATUS ≠ AWARD</dd></div>
+          </dl>
+        </section>
+
+        <section className="now-log" aria-labelledby="now-log-heading">
+          <div className="profile-page-section-heading">
+            <p>01 / CHANGE LOG</p>
+            <div>
+              <h2 id="now-log-heading">有日期，也有邊界的近期紀錄</h2>
+              <p>最近更新排在前面；有完整專案頁的項目可繼續開啟，仍在規劃中的工作則只保留這一筆狀態。</p>
+            </div>
+          </div>
+          <ol className="now-timeline">
+            {nowUpdates.map((update, index) => (
+              <li key={update.id}>
+                <div className="now-timeline-rail" aria-hidden="true">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <article>
+                  <div className="now-update-topline">
+                    <time dateTime={update.date}>{formatAsOfDate(update.date)}</time>
+                    <StatusPill tone={update.tone}>{update.status}</StatusPill>
+                  </div>
+                  <p className="now-update-lane">{update.lane}</p>
+                  <h3>{update.title}</h3>
+                  <p className="now-update-detail">{update.detail}</p>
+                  <dl>
+                    <div><dt>EVIDENCE</dt><dd>{update.evidence}</dd></div>
+                    <div><dt>BOUNDARY</dt><dd>{update.boundary}</dd></div>
+                  </dl>
+                  {update.projectId && portfolioProjectById.has(update.projectId) ? (
+                    <a href={projectPath(update.projectId)}>開啟專案紀錄 <ArrowUpRight size={17} aria-hidden="true" /></a>
+                  ) : null}
+                </article>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="now-next" aria-labelledby="now-next-heading">
+          <div>
+            <p>02 / KEEP READING</p>
+            <h2 id="now-next-heading">從更新，走到完整履歷與證據。</h2>
+          </div>
+          <div>
+            <a href={profilePath()}>一頁履歷 <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <a href={evidencePath()}>公開證明與 Demo <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <a href={professionalContactHref}>Email 聯絡 <Mail size={18} aria-hidden="true" /></a>
+          </div>
         </section>
       </main>
     </m.div>
@@ -1905,13 +2103,14 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
             </div>
             <div className="profile-page-actions">
               <a className="primary-action" href="/#featured">3 分鐘精選 <ArrowDownRight size={19} /></a>
+              <a className="secondary-action" href={nowPath()}>最近更新 <ArrowUpRight size={19} /></a>
               <a className="secondary-action" href={evidencePath()}>公開證明與 Demo <ArrowUpRight size={19} /></a>
               <a className="secondary-action" href={professionalContactHref}>Email 聯絡 <Mail size={19} /></a>
             </div>
           </div>
           <aside className="profile-page-signal-board" aria-hidden="true">
             <span>PUBLIC SNAPSHOT</span>
-            <strong>06</strong>
+            <strong>07</strong>
             <span>FLAGSHIP CASES</span>
             <div><span>BASE</span><strong>EE / YZU</strong></div>
             <div><span>METHOD</span><strong>MODEL TO SYSTEM</strong></div>
@@ -1926,11 +2125,42 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
           <p>研究型問題需要謹慎地標示資料、驗證與使用邊界；產品型問題則需要讓流程、決策與交付能被看見。我的工作重點是讓這兩種要求在同一個系統設計中對齊。</p>
         </section>
 
-        <section className="profile-flagship-section" id="resume-highlights" aria-labelledby="profile-flagship-heading">
+        <section className="profile-latest-section" id="resume-highlights" aria-labelledby="profile-latest-heading">
           <div className="profile-page-section-heading">
-            <p>01 / FLAGSHIP CASE STUDIES</p>
+            <p>01 / LATEST RECORD</p>
             <div>
-              <h2 id="profile-flagship-heading">六件可深入閱讀的案例</h2>
+              <h2 id="profile-latest-heading">最近成果，不把狀態寫得比證據更大。</h2>
+              <p>獎項、會議排程、正式收件、工程紀錄與決賽入圍各自保留原本的證明強度。</p>
+            </div>
+          </div>
+          <ol className="profile-latest-list">
+            {resumeHighlights.map((highlight) => (
+              <li key={`${highlight.date}-${highlight.title}`}>
+                <div className="profile-latest-date">
+                  <time dateTime={highlight.date}>{formatAsOfDate(highlight.date)}</time>
+                  <StatusPill tone={highlight.tone}>{highlight.label}</StatusPill>
+                </div>
+                <div>
+                  <h3>{highlight.title}</h3>
+                  <p>{highlight.detail}</p>
+                  <small>{highlight.boundary}</small>
+                </div>
+                {highlight.projectId ? (
+                  <a href={projectPath(highlight.projectId)} aria-label={`開啟 ${highlight.title} 專案紀錄`}>
+                    <ArrowUpRight size={18} aria-hidden="true" />
+                  </a>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+          <a className="profile-latest-more" href={nowPath()}>查看完整 /now 時間軸 <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </section>
+
+        <section className="profile-flagship-section" id="resume-cases" aria-labelledby="profile-flagship-heading">
+          <div className="profile-page-section-heading">
+            <p>02 / FLAGSHIP CASE STUDIES</p>
+            <div>
+              <h2 id="profile-flagship-heading">七件可深入閱讀的案例</h2>
               <p>每一案都保留問題、角色、公開素材、可公開佐證與範圍說明，避免用單一成果標籤取代實際脈絡。</p>
             </div>
           </div>
@@ -1961,7 +2191,7 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
 
         <section className="profile-method-section" aria-labelledby="profile-method-heading">
           <div className="profile-page-section-heading">
-            <p>02 / WORKING METHOD</p>
+            <p>03 / WORKING METHOD</p>
             <div>
               <h2 id="profile-method-heading">能力要能落在工作流程裡。</h2>
               <p>不把工具名稱當成能力本身，而是說清楚它們各自在資料、裝置、流程與公開表述中解決的問題。</p>
@@ -1983,7 +2213,7 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
 
         <section className="profile-contact-section" aria-labelledby="profile-contact-heading">
           <div>
-            <p className="section-index">03 / PUBLIC CONTACT ROUTES</p>
+            <p className="section-index">04 / PUBLIC CONTACT ROUTES</p>
             <h2 id="profile-contact-heading">從公開資料開始對話。</h2>
             <p>目前開放 2027 實習、研究合作與工程原型協作。可以直接寄信，或先從公開案例與 GitHub 了解工作內容。</p>
           </div>
@@ -1996,6 +2226,11 @@ function ProfilePage({ localCharacterPreview }: { localCharacterPreview: LocalCh
             <a className="profile-github-link" href={evidencePath()}>
               <BadgeCheck size={24} aria-hidden="true" />
               <span><small>PUBLIC EVIDENCE</small><strong>證明、參與紀錄與 Demo 索引</strong></span>
+              <ArrowUpRight size={21} aria-hidden="true" />
+            </a>
+            <a className="profile-github-link" href={nowPath()}>
+              <Radar size={24} aria-hidden="true" />
+              <span><small>DATED UPDATE LOG</small><strong>最近完成、進行中與下一步</strong></span>
               <ArrowUpRight size={21} aria-hidden="true" />
             </a>
             <a className="profile-github-link" href="https://github.com/Daniel-Tsai-9487" rel="noopener noreferrer" target="_blank">
@@ -2057,16 +2292,16 @@ function EnglishPage() {
           <div>
             <p className="english-kicker">MIN-YU TSAI / SELECTED SYSTEMS PORTFOLIO</p>
             <h1 ref={headingRef} id="english-heading" tabIndex={-1}>Systems that carry research into usable work.</h1>
-            <p className="english-lead">A concise selection of six projects across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education. Each case stays within its public scope.</p>
+            <p className="english-lead">A concise selection of seven projects across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education. Each case stays within its public scope.</p>
             <div className="english-hero-actions">
-              <a className="primary-action" href="#english-cases">Explore six cases <ArrowDownRight size={19} /></a>
+              <a className="primary-action" href="#english-cases">Explore seven cases <ArrowDownRight size={19} /></a>
               <a className="secondary-action" href={evidencePath()}>Evidence index (ZH) <ArrowUpRight size={19} /></a>
               <a className="secondary-action" href="/">Open Chinese portfolio <ArrowUpRight size={19} /></a>
             </div>
           </div>
           <aside className="english-signal-board" aria-label="Portfolio summary">
             <span>SELECTED WORK</span>
-            <strong>06</strong>
+            <strong>07</strong>
             <span>FLAGSHIP CASES</span>
             <div><span>BASE</span><strong>EE / YZU</strong></div>
             <div><span>METHOD</span><strong>MODEL TO SYSTEM</strong></div>
@@ -2077,7 +2312,7 @@ function EnglishPage() {
           <div className="english-section-heading">
             <p>01 / SELECTED CASE STUDIES</p>
             <div>
-              <h2 id="english-cases-heading">Six flagship projects, with public boundaries intact.</h2>
+              <h2 id="english-cases-heading">Seven flagship projects, with public boundaries intact.</h2>
               <p>Each card includes a concise role and outcome statement. External resources appear only when they are publicly accessible and specific to that case.</p>
             </div>
           </div>
@@ -2137,8 +2372,9 @@ function App() {
   const projectRouteId = pageRoute.kind === "project" ? pageRoute.projectId : null;
   const isProfileRoute = pageRoute.kind === "profile";
   const isEvidenceRoute = pageRoute.kind === "evidence";
+  const isNowRoute = pageRoute.kind === "now";
   const isEnglishRoute = pageRoute.kind === "english";
-  useInitialSectionHash(projectRouteId !== null || isProfileRoute || isEvidenceRoute || isEnglishRoute);
+  useInitialSectionHash(projectRouteId !== null || isProfileRoute || isEvidenceRoute || isNowRoute || isEnglishRoute);
   const previousProjectRouteRef = useRef<string | null>(projectRouteId);
   const pendingSectionIdRef = useRef<string | null>(null);
   const scrollProgress = useScrollProgress();
@@ -2148,8 +2384,8 @@ function App() {
     () => orderedPortfolioProjects.find((project) => project.id === projectRouteId),
     [projectRouteId],
   );
-  const isDarkRoute = Boolean(routedProject) || isProfileRoute || isEnglishRoute;
-  const activeProject = flagshipProjects[activeFeatured] ?? flagshipProjects[0];
+  const isDarkRoute = Boolean(routedProject) || isProfileRoute || isNowRoute || isEnglishRoute;
+  const activeProject = homeFeaturedProjects[activeFeatured] ?? homeFeaturedProjects[0];
   const shellStyle = { "--scroll-progress": scrollProgress } as CSSProperties;
   const closeMenu = () => setMenuOpen(false);
   const changeArchiveFilter = (nextFilter: ArchiveFilter) => {
@@ -2204,6 +2440,12 @@ function App() {
       return;
     }
 
+    if (isNowRoute) {
+      document.title = siteConfig.nowTitle;
+      previousProjectRouteRef.current = null;
+      return;
+    }
+
     if (isEnglishRoute) {
       document.title = siteConfig.englishTitle;
       previousProjectRouteRef.current = null;
@@ -2216,7 +2458,7 @@ function App() {
       pendingSectionIdRef.current = targetId;
     }
     previousProjectRouteRef.current = null;
-  }, [isEnglishRoute, isEvidenceRoute, isProfileRoute, routedProject]);
+  }, [isEnglishRoute, isEvidenceRoute, isNowRoute, isProfileRoute, routedProject]);
 
   const scrollToPendingSection = () => {
     const targetId = pendingSectionIdRef.current;
@@ -2246,6 +2488,8 @@ function App() {
             <ProfilePage key="profile-page" localCharacterPreview={localCharacterPreview} />
           ) : isEvidenceRoute ? (
             <EvidencePage key="evidence-page" />
+          ) : isNowRoute ? (
+            <NowPage key="now-page" />
           ) : isEnglishRoute ? (
             <EnglishPage key="english-page" />
           ) : (
@@ -2364,13 +2608,13 @@ function App() {
               <p className="section-index">02 / THREE-MINUTE SELECTION</p>
             <div>
                 <h2 id="featured-heading">3 分鐘精選</h2>
-                <p>首頁只保留這一套六件旗艦精選；選一件快速讀，再開啟完整 Case Study。</p>
+                <p>首頁只保留三件跨領域精選；選一件快速讀，再開啟完整 Case Study。</p>
             </div>
-              <p className="section-side-note">06 FILES<br />OPEN THE CASE</p>
+              <p className="section-side-note">03 FILES<br />OPEN THE CASE</p>
           </div>
 
           <div className="featured-selector reveal" role="group" aria-label="代表成果選擇">
-            {flagshipProjects.map((project, index) => (
+            {homeFeaturedProjects.map((project, index) => (
               <m.button
                 className={index === activeFeatured ? "featured-tab is-active" : "featured-tab"}
                 key={project.id}

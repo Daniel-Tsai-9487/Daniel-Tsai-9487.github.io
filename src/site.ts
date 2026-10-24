@@ -8,9 +8,11 @@ export const siteConfig = {
   profileDescription: "蔡旻佑的一頁履歷與專業概要：聚焦生醫 AI、邊緣運算、智慧工作流、跨領域系統整合與 2027 實習／研究合作方向。",
   evidenceTitle: "公開證明與 Demo 索引 | 蔡旻佑",
   evidenceDescription: "蔡旻佑作品集的公開證明與 Demo 索引：分開呈現獎項、參與／決賽紀錄、課程證書、公開原型與受限證據邊界。",
+  nowTitle: "最近更新 | 蔡旻佑 Systems Portfolio",
+  nowDescription: "蔡旻佑近期研究、競賽、工程與公開交付的日期化紀錄；每筆更新分開標示證據來源、目前狀態與尚未完成的邊界。",
   englishSiteName: "Min-Yu Tsai | Systems Portfolio",
   englishTitle: "Min-Yu Tsai | Selected Systems Portfolio",
-  englishDescription: "Six selected case studies by Min-Yu Tsai across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education.",
+  englishDescription: "Seven selected case studies by Min-Yu Tsai across biomedical AI, edge systems, semiconductor workflows, enterprise AI, and fintech risk education.",
 } as const;
 
 export function projectPath(projectId: string) {
@@ -27,6 +29,10 @@ export function englishPath() {
 
 export function evidencePath() {
   return "/evidence/";
+}
+
+export function nowPath() {
+  return "/now/";
 }
 
 export function absoluteSiteUrl(path = "/") {

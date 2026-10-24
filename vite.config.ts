@@ -5,8 +5,8 @@ import react from "@vitejs/plugin-react";
 import { flagshipProjectIds, getCaseStudy } from "./src/data/caseStudies";
 import { englishCaseSummaries } from "./src/data/englishPortfolio";
 import { publicDemoRecords, publicProofRecords } from "./src/data/evidence";
-import { portfolioProjects, type PortfolioProject } from "./src/data/portfolio";
-import { absoluteSiteUrl, englishPath, evidencePath, profilePath, projectPath, siteConfig } from "./src/site";
+import { nowUpdates, portfolioProjects, type PortfolioProject } from "./src/data/portfolio";
+import { absoluteSiteUrl, englishPath, evidencePath, nowPath, profilePath, projectPath, siteConfig } from "./src/site";
 
 function escapeHtmlAttribute(value: string) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -248,8 +248,51 @@ function renderEvidencePage(sourceHtml: string) {
   return replaceStructuredData(html, structuredData);
 }
 
+function renderNowPage(sourceHtml: string) {
+  const canonical = absoluteSiteUrl(nowPath());
+  const socialImage = absoluteSiteUrl(siteConfig.defaultSocialImage);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: siteConfig.nowTitle,
+    description: siteConfig.nowDescription,
+    url: canonical,
+    inLanguage: "zh-Hant",
+    dateModified: nowUpdates[0]?.date,
+    author: {
+      "@type": "Person",
+      name: "蔡旻佑",
+      alternateName: "Min-Yu Tsai",
+      url: siteConfig.origin,
+    },
+    hasPart: nowUpdates.map((update) => ({
+      "@type": "CreativeWork",
+      name: update.title,
+      description: update.detail,
+      dateModified: update.date,
+      url: update.projectId ? absoluteSiteUrl(projectPath(update.projectId)) : canonical,
+    })),
+  };
+  let html = sourceHtml.replace(/<title>[\s\S]*?<\/title>/, `<title>${siteConfig.nowTitle}</title>`);
+
+  html = replaceMeta(html, "name", "description", siteConfig.nowDescription);
+  html = replaceCanonical(html, canonical);
+  html = replaceMeta(html, "property", "og:title", siteConfig.nowTitle);
+  html = replaceMeta(html, "property", "og:description", siteConfig.nowDescription);
+  html = replaceMeta(html, "property", "og:type", "website");
+  html = replaceMeta(html, "property", "og:url", canonical);
+  html = replaceMeta(html, "property", "og:image", socialImage);
+  html = replaceMeta(html, "property", "og:image:alt", "蔡旻佑最近更新與工作紀錄預覽圖");
+  html = replaceMeta(html, "name", "twitter:card", "summary_large_image");
+  html = replaceMeta(html, "name", "twitter:title", siteConfig.nowTitle);
+  html = replaceMeta(html, "name", "twitter:description", siteConfig.nowDescription);
+  html = replaceMeta(html, "name", "twitter:image", socialImage);
+  html = replaceMeta(html, "name", "twitter:image:alt", "蔡旻佑最近更新與工作紀錄預覽圖");
+  return replaceStructuredData(html, structuredData);
+}
+
 function createSitemap() {
-  const urls = ["/", profilePath(), evidencePath(), englishPath(), ...portfolioProjects.map((project) => projectPath(project.id))];
+  const urls = ["/", profilePath(), evidencePath(), nowPath(), englishPath(), ...portfolioProjects.map((project) => projectPath(project.id))];
   const entries = urls.map((path) => `  <url><loc>${absoluteSiteUrl(path)}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
 }
@@ -276,6 +319,10 @@ function staticProjectPages(): Plugin {
       const evidenceOutputPath = resolve(outDir, evidencePath().replace(/^\//, ""), "index.html");
       mkdirSync(dirname(evidenceOutputPath), { recursive: true });
       writeFileSync(evidenceOutputPath, renderEvidencePage(homeHtml), "utf8");
+
+      const nowOutputPath = resolve(outDir, nowPath().replace(/^\//, ""), "index.html");
+      mkdirSync(dirname(nowOutputPath), { recursive: true });
+      writeFileSync(nowOutputPath, renderNowPage(homeHtml), "utf8");
 
       for (const project of portfolioProjects) {
         const outputPath = resolve(outDir, projectPath(project.id).replace(/^\//, ""), "index.html");

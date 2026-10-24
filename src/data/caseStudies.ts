@@ -5,9 +5,16 @@ export const flagshipProjectIds = [
   "yieldsentry",
   "erp-ai-quote",
   "tradepilot",
+  "heteroguard-edge",
 ] as const;
 
 export type FlagshipProjectId = (typeof flagshipProjectIds)[number];
+
+export const homeFeaturedProjectIds = [
+  "vap-early-warning",
+  "heteroguard-edge",
+  "yieldsentry",
+] as const satisfies readonly FlagshipProjectId[];
 
 export type CaseStudyStep = {
   label: string;
@@ -124,6 +131,13 @@ export type CaseStudyPublicScope = {
   exclusions: string[];
 };
 
+export type CaseStudyReproduction = {
+  environment: string;
+  commands: string[];
+  expected: string[];
+  boundary: string;
+};
+
 export type CaseStudy = {
   projectId: FlagshipProjectId;
   label: string;
@@ -139,6 +153,7 @@ export type CaseStudy = {
   evidence: CaseStudyEvidence[];
   links: CaseStudyLink[];
   publicScope: CaseStudyPublicScope;
+  reproduction?: CaseStudyReproduction;
 };
 
 export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
@@ -193,7 +208,7 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
     ],
     evidence: [
       { label: "CONFERENCE", value: "ABSTRACT ACCEPTED", detail: "ICBEI 2026 摘要接受；正式發表與公開範圍仍依會議流程處理。", source: "CONFERENCE RECORD", kind: "OFFICIAL RESULT", availability: "RESTRICTED", asOf: "2026-10" },
-      { label: "MANUSCRIPT", value: "WA2611", detail: "稿號 WA2611 已完成註冊，主辦方安排現場海報發表。", source: "REGISTRATION RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "MANUSCRIPT", value: "REGISTERED", detail: "摘要已完成註冊，主辦方安排現場海報發表；稿號保留不公開。", source: "REGISTRATION RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10" },
       { label: "ROLE", value: "FIRST AUTHOR", detail: "負責資料處理、候選模型比較與結果、摘要資料整理。", source: "CONFERENCE AUTHOR RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
     ],
     links: [
@@ -261,14 +276,16 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { id: "finalist-record", label: "04 / ON-SITE RECORD", title: "Finalist on-site record", caption: "現場照片只證明本人與作品完成決賽現場展示，不代表獲獎、硬體完成或臨床驗證。", kind: "record", status: "PUBLIC PROJECT ARTIFACT", src: "/evidence/swallow-eit-finals-onsite.jpg", alt: "嚥域專案在第十屆全國醫學工程創意競賽決賽現場的展示紀錄。", provenance: "2026-10-03 決賽現場照片；畫面僅含本人及競賽識別，未用於宣稱獎項或技術驗證。" },
     ],
     evidence: [
+      { label: "FINALIST CERTIFICATE", value: "OFFICIAL / 2026-10-03", detail: "主辦正式證明確認嚥域入圍第十屆全國醫學工程創意競賽大專組決賽；它只支持入圍，不代表獲獎或臨床成果。", source: "ORGANIZER-ISSUED CERTIFICATE", kind: "OFFICIAL RESULT", availability: "PUBLIC", href: "/evidence/swallow-eit-finalist-certificate-2026-10-03.jpg", asOf: "2026-10-03" },
       { label: "OFFICIAL EVENT", value: "2026 COMPETITION", detail: "主辦單位公開的競賽資訊入口；它不取代個案入圍公告或決賽交付素材。", source: "TAIPEI MEDICAL UNIVERSITY / EVENT PAGE", kind: "OFFICIAL EVENT", availability: "PUBLIC", href: "https://sbme.tmu.edu.tw/front/Events1/competition/2026sbme/pages.php?ID=77346b1d82056289f7496abbfe13dd63281f2ad3c3fb62468fd4fe50355dbf62", asOf: "2026-10" },
       { label: "ON-SITE FINAL", value: "2026-10-03", detail: "現場照片證明本人與嚥域完成決賽現場展示；目前沒有查到得獎結果。", source: "ON-SITE PHOTO RECORD", kind: "PROJECT STATUS", availability: "PUBLIC", href: "/evidence/swallow-eit-finals-onsite.jpg", asOf: "2026-10" },
-      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本人擔任隊長，主導問題框架、回饋流程與公開敘事。", source: "COMPETITION TEAM RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本人擔任隊長，主導問題框架、回饋流程與公開敘事。團隊姓名依共同同意隨正式證明公開。", source: "COMPETITION TEAM RECORD", kind: "ROLE OR TEAM RECORD", availability: "PUBLIC", href: "/evidence/swallow-eit-finalist-certificate-2026-10-03.jpg", asOf: "2026-10-03" },
       { label: "OPEN DATA QC", value: "PUBLIC ARTIFACT", detail: "公開 EIT 資料品質檢查圖只用於呈現研究工作切面，不主張真實量測或臨床結果。", source: "PUBLIC PROJECT ARTIFACT", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/swallow-eit-open-data-qc.png", asOf: "2026-10" },
     ],
     links: [
+      { label: "OFFICIAL CERTIFICATE", title: "嚥域正式入圍決賽證明", detail: "主辦正式文件確認大專組入圍決賽；不代表獲獎、硬體完成或臨床驗證。", availability: "PUBLIC", href: "/evidence/swallow-eit-finalist-certificate-2026-10-03.pdf" },
       { label: "OFFICIAL EVENT", title: "第十屆全國醫學工程創意競賽", detail: "臺北醫學大學生物醫學工程學系公開競賽頁；不含未取得授權的決賽交付素材。", availability: "PUBLIC", href: "https://sbme.tmu.edu.tw/front/Events1/competition/2026sbme/pages.php?ID=77346b1d82056289f7496abbfe13dd63281f2ad3c3fb62468fd4fe50355dbf62" },
-      { label: "COMPETITION MATERIAL", title: "決賽交付素材不公開", detail: "網站只使用本人現場照；簡報、附件與團隊素材仍維持受限。", availability: "RESTRICTED" },
+      { label: "COMPETITION MATERIAL", title: "決賽交付素材不公開", detail: "正式入圍證明與現場照已公開；簡報、附件與團隊工程素材仍維持受限。", availability: "RESTRICTED" },
       { label: "DEMO ACCESS", title: "情境原型記錄", detail: "目前網站僅呈現合成資料與方法敘事，不提供醫療或硬體 demo 連結。", availability: "RESTRICTED" },
     ],
     publicScope: {
@@ -330,16 +347,17 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { id: "competition-record", label: "03 / RECORD", title: "FPGA competition record", caption: "保留 AMD Track 入圍決賽及 A3D3 Track 優選獎的獨立成果，不加入團隊工程資產或未取得授權的素材。", kind: "record", status: "RECORD ONLY" },
     ],
     evidence: [
-      { label: "RECOGNITION", value: "A3D3 TRACK AWARD", detail: "2026 FPGA 智慧運算與終端節點創意應用競賽 A3D3 Track 優選獎；此成果不等同 AMD Track 主獎。", source: "ORGANIZER NOTIFICATION RECORD", kind: "AWARD RECORD", availability: "RESTRICTED", asOf: "2026-10" },
-      { label: "SHOWCASE", value: "AMD FINALIST", detail: "AMD Track 入圍決賽，並於 2026-09-05 完成現場展示；AMD Track 主獎最終未得獎。", source: "PROJECT CLOSEOUT RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10" },
-      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本案例只列本人負責的 DMA、批次補齊與板端驗證紀錄。", source: "TEAM CONTRIBUTION RECORD", kind: "ROLE OR TEAM RECORD", availability: "RESTRICTED", asOf: "2026-10" },
+      { label: "RECOGNITION", value: "A3D3 TRACK AWARD", detail: "2026 FPGA 智慧運算與終端節點創意應用競賽 A3D3 Track 優選獎；來源是主辦結果通知，不是獎狀，且不等同 AMD Track 主獎。原畫面含主辦人聯絡資料，因此不公開影像。", source: "ORGANIZER AWARD NOTICE", kind: "AWARD RECORD", availability: "RESTRICTED", asOf: "2026-09-27" },
+      { label: "SHOWCASE", value: "AMD FINALIST", detail: "正式參賽證明確認 BioPulse-SoC 團隊通過初賽並進入 AMD Track 決賽；AMD Track 主獎最終未得獎。", source: "OFFICIAL FINALIST CERTIFICATE", kind: "OFFICIAL RESULT", availability: "PUBLIC", href: "/evidence/biopulse-fpga-finalist-certificate-2026-09-05.jpg", asOf: "2026-09-05" },
+      { label: "TEAM", value: "2 MEMBERS", detail: "兩人團隊；本案例只列本人負責的 DMA、批次補齊與板端驗證紀錄。團隊姓名依共同同意隨正式證明公開。", source: "TEAM CONTRIBUTION RECORD", kind: "ROLE OR TEAM RECORD", availability: "PUBLIC", href: "/evidence/biopulse-fpga-finalist-certificate-2026-09-05.jpg", asOf: "2026-09-05" },
       { label: "SYSTEM VISUAL", value: "PUBLIC ARTIFACT", detail: "公開工程視覺呈現量化模型、HLS IP、AXI DMA 與 PYNQ-Z1 的交接關係，不含團隊工程檔、bitstream 或臨床資料。", source: "PUBLIC ENGINEERING VISUAL", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "/case-media/biopulse-public-engineering-demo.png", asOf: "2026-10" },
     ],
     links: [
+      { label: "AWARD NOTICE", title: "A3D3 Track 優選主辦通知", detail: "通知只證明 A3D3 Track 優選，不是獎狀，也不代表 AMD Track 得獎；原畫面含主辦人聯絡資料，因此不公開。", availability: "RESTRICTED" },
+      { label: "FINALIST CERTIFICATE", title: "AMD Track 決賽參賽證明", detail: "正式證明確認通過初賽並進入 AMD Track 決賽；AMD Track 主獎最終未得獎。", availability: "PUBLIC", href: "/evidence/biopulse-fpga-finalist-certificate-2026-09-05.jpg" },
       { label: "TECHNICAL REFERENCE", title: "hls4ml documentation", detail: "公開量化模型轉 HLS 框架文件；提供技術脈絡，不是本案公開原始碼或成效佐證。", availability: "PUBLIC", href: "https://fastmachinelearning.org/hls4ml/" },
       { label: "TECHNICAL PLATFORM", title: "PYNQ", detail: "AMD adaptive-computing 的公開 PYNQ 平台資料；只對應目標板卡開發脈絡。", availability: "PUBLIC", href: "https://www.pynq.io/" },
       { label: "TECHNICAL MATERIAL", title: "工程資產受限", detail: "HLS、RTL、bitstream、工程設定與團隊檔案不列為公開下載。", availability: "RESTRICTED" },
-      { label: "SHOWCASE RECORD", title: "公開成果待授權素材", detail: "可公開展示紀錄會在確認團隊與主辦授權後加入。", availability: "RESTRICTED" },
     ],
     publicScope: {
       summary: "公開頁聚焦模型到板卡的系統交接與本人負責範圍，不公開團隊工程資產或擴張硬體展示的結論。",
@@ -409,7 +427,7 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
       { label: "OPEN DATA", title: "WM-811K Wafer Map", detail: "公開資料來源，僅用於說明原型的可重現研究脈絡，不代表產線資料或 production 校正。", availability: "PUBLIC", href: "https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map/data" },
       { label: "OPEN DATA", title: "UCI SECOM", detail: "公開製程感測資料來源，僅用於研究與原型驗證，不代表合作方或產線資料。", availability: "PUBLIC", href: "https://archive.ics.uci.edu/dataset/179/secom" },
       { label: "SOURCE ACCESS", title: "案例原始碼仍為私有", detail: "不公開產線資料、原始碼、機密設定或競賽提交包。", availability: "RESTRICTED" },
-      { label: "COMPETITION RECORD", title: "競賽成果佐證受限", detail: "公開頁保留佳作與系統範圍；主辦成果頁或團隊授權素材確認後才會新增外部連結。", availability: "RESTRICTED" },
+      { label: "COMPETITION RECORD", title: "佳作原件尚未定位", detail: "公開頁保留結案紀錄中的佳作狀態；找到獎狀或主辦公告原件後才會新增公開證明。", availability: "RESTRICTED" },
     ],
     publicScope: {
       summary: "公開頁只說明離線 Agent 的架構、治理邏輯與競賽成果，不接觸產線資料或放行決策。",
@@ -485,6 +503,88 @@ export const caseStudies: Record<FlagshipProjectId, CaseStudy> = {
         "不宣稱正式上線、客戶採用、實際報價效益或個人獨立完成。",
         "任何自動抽取結果都需要在企業流程中由人員核對，不能直接形成對外承諾。",
       ],
+    },
+  },
+  "heteroguard-edge": {
+    projectId: "heteroguard-edge",
+    label: "REPRODUCIBLE SAFETY CASE",
+    headline: "把安全責任寫進契約，\n再讓任何人重播同一組合成事件。",
+    lead: "HeteroGuard Edge 是電子原型裝配流程的 contract-first 安全核心。公開交付聚焦 JSON Schema、provenance、狀態轉移與 fail-closed 判定，並提供七案例 deterministic synthetic replay，讓評審與工程協作者能在不取得團隊私有素材的前提下重現 G0／G1 行為。",
+    focus: "Contract-first safety / Deterministic replay / Provenance / Edge workflow",
+    contribution: ["安全契約核心與公開技術交付主導", "schema、狀態轉移與 replay corpus 整合", "投稿材料、公開 repository 與 Demo 邊界整理"],
+    system: [
+      { label: "SCHEMA CONTRACT", detail: "以 13 份 JSON Schema 固定事件、證據、狀態與拒絕條件的機器可讀契約。" },
+      { label: "PROVENANCE", detail: "以 manifest、雜湊與 freeze chain 記錄 fixture 與流程來源，避免未標示的素材漂移。" },
+      { label: "STRICT PARSING", detail: "未知欄位、缺失檢查與非法狀態轉移採 fail-closed，不把模糊輸入當成通過。" },
+      { label: "G1 REPLAY", detail: "以七個合成案例重播 Normal、K1、K2、K3、K4 與失敗分支，固定輸入與預期判定。" },
+      { label: "HUMAN BOUNDARY", detail: "公開核心只驗證契約與流程；真實裝配判斷、硬體整合與放行責任仍未被取代。" },
+    ],
+    chapters: [
+      {
+        index: "01",
+        eyebrow: "CONTRACT BEFORE MODEL",
+        title: "先定義什麼能被接受，再談自動化。",
+        copy: "案例把事件欄位、狀態轉移、獨立檢查與拒絕條件寫成 schema 與 process contract。系統遇到未知或不完整輸入時選擇停止，而不是補猜一個看似合理的結果。",
+      },
+      {
+        index: "02",
+        eyebrow: "REPLAY THE DECISION",
+        title: "可重現的不是畫面，而是判定路徑。",
+        copy: "公開 repository 保存 deterministic fixtures、manifest 與 CLI。重播同一組 corpus 時，讀者可以看到 Normal、K1 至 K4、非法轉移與缺少獨立檢查如何進入不同結果。",
+      },
+      {
+        index: "03",
+        eyebrow: "DO NOT OVERCLAIM",
+        title: "G1 contract replay 不等於端到端系統。",
+        copy: "這份交付沒有相機、模型、MCU、FPGA、UGen300、即時控制或正式效能指標。投稿已由平台收件，但收件不等於審查通過、入圍或獲獎。",
+      },
+    ],
+    milestones: [
+      { stage: "G0 CONTRACT CORE", title: "固定資料與安全契約", copy: "完成 schema、strict parsing、provenance 與 fail-closed 核心，讓責任邊界可被機器檢查。" },
+      { stage: "G1 SYNTHETIC REPLAY", title: "建立七案例 deterministic corpus", copy: "以 12 秒流程契約與七個合成案例重播通過、拒絕與缺失檢查分支。" },
+      { stage: "PUBLIC DELIVERY", title: "公開 repository 與 Demo 影片", copy: "將可重現套件與示範影片公開；2026-10-13 投稿並由平台收件，正式結果待主辦通知。" },
+    ],
+    outcomes: [
+      { label: "CONTRACT", value: "13 SCHEMAS", copy: "以機器可讀契約固定事件、證據、狀態與拒絕條件。" },
+      { label: "REPLAY", value: "7 SYNTHETIC CASES", copy: "公開 corpus 可重播正常、K1–K4 與兩個失敗分支。" },
+      { label: "STATUS", value: "RECEIVED 2026-10-13", copy: "平台已收件，正式審查結果仍待通知。" },
+    ],
+    media: [
+      { id: "g1-replay", label: "01 / REPLAY", title: "G1 deterministic synthetic replay", caption: "公開 repository 內含七案例 corpus 與 viewer；所有事件都標示 SYNTHETIC / NOT E2E。", kind: "workflow", status: "PUBLIC SYNTHESIS" },
+      { id: "contract-core", label: "02 / CONTRACT", title: "Contract-first safety core", caption: "以 schema、strict parsing、manifest 與狀態轉移說明 fail-closed 判定路徑。", kind: "signal", status: "PUBLIC SYNTHESIS" },
+      { id: "submission-record", label: "03 / STATUS", title: "Platform receipt record", caption: "2026-10-13 已投稿並由平台收件；不把收件紀錄當成審查通過或得獎。", kind: "record", status: "RECORD ONLY" },
+    ],
+    evidence: [
+      { label: "PUBLIC PACKAGE", value: "13 SCHEMAS / 7 CASES", detail: "公開 repository 提供 schema、process contract、CLI、manifest 與 deterministic synthetic replay corpus。", source: "PUBLIC GITHUB REPOSITORY", kind: "PROJECT ARTIFACT", availability: "PUBLIC", href: "https://github.com/Daniel-Tsai-9487/heteroguard-edge-public", asOf: "2026-10-13" },
+      { label: "SUBMISSION", value: "PLATFORM RECEIVED", detail: "2026-10-13 投稿並取得平台收件紀錄；收件編號保留不公開，且收件不等於資格通過、入圍或獲獎。", source: "PLATFORM RECEIPT RECORD", kind: "PROJECT STATUS", availability: "RESTRICTED", asOf: "2026-10-13" },
+      { label: "BENCHMARK", value: "NOT_EVALUATED", detail: "AUROC、AUPRC、latency、FPS 與端到端效能均未在公開交付中評估。", source: "PUBLIC PACKAGE METRIC STATE", kind: "PUBLIC SCOPE", availability: "PUBLIC", asOf: "2026-10-13" },
+    ],
+    links: [
+      { label: "GITHUB REPOSITORY", title: "HeteroGuard Edge public repository", detail: "可直接取得 schema、CLI、fixtures、manifest 與 G1 synthetic replay viewer。", availability: "PUBLIC", href: "https://github.com/Daniel-Tsai-9487/heteroguard-edge-public" },
+      { label: "DEMO VIDEO", title: "G1 synthetic replay Demo", detail: "公開影片展示 deterministic replay；內容仍是 SYNTHETIC / NOT E2E。", availability: "PUBLIC", href: "https://youtu.be/grTkSddfwRQ" },
+      { label: "PRIVATE DELIVERY", title: "團隊投稿與硬體素材受限", detail: "提案附件、團隊資料與尚未完成的硬體整合不對外公開。", availability: "RESTRICTED" },
+    ],
+    publicScope: {
+      summary: "公開頁只主張可重現的 contract core 與 G1 deterministic synthetic replay，不把投稿收件或流程契約包裝成真實裝配系統。",
+      exclusions: [
+        "不宣稱相機、模型、MCU、FPGA、UGen300、即時控制或端到端整合已完成。",
+        "所有 replay 事件都是合成 fixture，不是現場製程資料或真實缺陷偵測結果。",
+        "正式效能指標維持 not_evaluated；平台收件不等於審查通過、入圍或獲獎。",
+      ],
+    },
+    reproduction: {
+      environment: "Python 3.14.6（公開交付紀錄環境）；從 repository 根目錄執行。",
+      commands: [
+        "python -m pip install -e .",
+        "python -m heteroguard_contract --help",
+        "python -m heteroguard_contract g1-demo --corpus-root ./demo/g1_synthetic_replay --process-contract ./contracts/process_contract.yaml",
+      ],
+      expected: [
+        "輸出標頭包含 [SYNTHETIC_EVENTS | CONTRACT | FIXTURE]。",
+        "輸出明確標示 SYNTHETIC / NOT E2E。",
+        "七案例 corpus 可重播 Normal、K1、K2、K3、valid K4、invalid transition 與 K4 missing independent check。",
+      ],
+      boundary: "這個步驟重現的是契約解析與合成事件判定，不會重現相機、模型、MCU、FPGA、UGen300、即時控制、AUROC／AUPRC 或端到端效能。",
     },
   },
   tradepilot: {
